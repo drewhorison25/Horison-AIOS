@@ -770,7 +770,7 @@
         <div class="form-toggle">
             <p id="toggleText">
                 Need an account?
-                <a href="#" onclick="alert('Account creation is restricted.\n\nPlease contact your Admin or Superuser to create your AIOS account.'); return false;" id="toggleLink">Contact Admin</a>
+                <a href="#" onclick="alert('Account creation is restricted.\\n\\nPlease contact your Admin or Superuser to create your AIOS account.'); return false;" id="toggleLink">Contact Admin</a>
             </p>
             <p style="font-size: 12px; color: #4a5568; margin-top: 8px;">
                 Only administrators can create new user accounts
@@ -1253,13 +1253,28 @@
 
 <script>
 // ============================================================
-// SUPABASE INITIALIZATION
+// SUPABASE INITIALIZATION (with load safety)
 // ============================================================
 const SUPABASE_URL = 'https://bbymjzkunlkwysfhwlzl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieW1qemt1bmxrd3lzZmh3bHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTYxMTYsImV4cCI6MjA4ODk5MjExNn0.pCxF8HriNi8UxydBJukZdjYv4s1tUSXyCLpGz55l6WE';
 
-// Use _sb to avoid conflict with the global 'supabase' from CDN
-const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let sb; // Supabase client instance — named 'sb' to avoid conflict with CDN's window.supabase
+try {
+    if (window.supabase && window.supabase.createClient) {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        throw new Error('Supabase library not loaded');
+    }
+} catch (e) {
+    console.error('Supabase init failed:', e);
+    document.addEventListener('DOMContentLoaded', () => {
+        const alertEl = document.getElementById('loginAlert');
+        if (alertEl) {
+            alertEl.textContent = 'Failed to connect to cloud. Please refresh the page or check your internet connection.';
+            alertEl.style.display = 'block';
+        }
+    });
+}
 
 // ============================================================
 // GLOBAL STATE
@@ -1410,7 +1425,7 @@ function showToast(message, type = 'info') {
 async function checkAuth() {
     showLoading('Checking session...');
 
-    const { data: { session } } = await _sb.auth.getSession();
+    const { data: { session } } = await sb.auth.getSession();
 
     if (session) {
         currentUser = session.user;
@@ -1422,7 +1437,7 @@ async function checkAuth() {
 }
 
 // Listen for auth state changes (e.g., tab focus, token refresh)
-_sb.auth.onAuthStateChange(async (event, session) => {
+sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
     } else if (event === 'SIGNED_OUT') {
@@ -1438,6 +1453,12 @@ _sb.auth.onAuthStateChange(async (event, session) => {
 // ============================================================
 async function handleLogin(event) {
     event.preventDefault();
+
+    if (!sb) {
+        showError('Cloud connection failed. Please refresh the page.');
+        return false;
+    }
+
     const email = document.getElementById('emailInput').value.trim();
     const password = document.getElementById('passwordInput').value;
     const btn = document.getElementById('loginBtn');
@@ -1446,30 +1467,35 @@ async function handleLogin(event) {
     btn.textContent = 'Signing in...';
     hideAlert();
 
-    const { data, error } = await _sb.auth.signInWithPassword({ email, password });
+    try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
-    if (error) {
-        showError(error.message);
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
+        if (error) {
+            showError(error.message);
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
 
-        // Log failed login
-        await logLoginEvent(email, 'failed_login', 'failed');
-        return false;
+            // Log failed login
+            try { await logLoginEvent(email, 'failed_login', 'failed'); } catch(e) {}
+            return false;
+        }
+
+        currentUser = data.user;
+        showLoading('Loading your workspace...');
+
+        // Load or create profile
+        await loadProfile();
+
+        // Log successful login
+        try { await logLoginEvent(email, 'login', 'success'); } catch(e) {}
+
+        showApp();
+        hideLoading();
+        showToast('Welcome back, ' + (currentProfile?.name || email) + '!', 'success');
+    } catch (err) {
+        showError('Login failed: ' + err.message);
+        console.error('Login error:', err);
     }
-
-    currentUser = data.user;
-    showLoading('Loading your workspace...');
-
-    // Load or create profile
-    await loadProfile();
-
-    // Log successful login
-    await logLoginEvent(email, 'login', 'success');
-
-    showApp();
-    hideLoading();
-    showToast('Welcome back, ' + (currentProfile?.name || email) + '!', 'success');
 
     btn.disabled = false;
     btn.textContent = 'Sign In';
@@ -1498,7 +1524,7 @@ async function handleSignup(event) {
     btn.textContent = 'Creating account...';
     hideAlert();
 
-    const { data, error } = await _sb.auth.signUp({
+    const { data, error } = await sb.auth.signUp({
         email,
         password,
         options: {
@@ -1515,7 +1541,7 @@ async function handleSignup(event) {
 
     // Create profile in profiles table
     if (data.user) {
-        await _sb.from('profiles').upsert({
+        await sb.from('profiles').upsert({
             id: data.user.id,
             email: email,
             name: name,
@@ -1548,7 +1574,7 @@ async function handleForgotPassword() {
     const email = prompt('Enter your email address to reset your password:');
     if (!email) return;
 
-    const { error } = await _sb.auth.resetPasswordForEmail(email);
+    const { error } = await sb.auth.resetPasswordForEmail(email);
     if (error) {
         showError(error.message);
     } else {
@@ -1565,7 +1591,7 @@ async function handleChangePassword() {
         alert('Password must be at least 6 characters.');
         return;
     }
-    const { error } = await _sb.auth.updateUser({ password: newPass });
+    const { error } = await sb.auth.updateUser({ password: newPass });
     if (error) {
         alert('Error: ' + error.message);
     } else {
@@ -1585,7 +1611,7 @@ async function logout() {
         await logLoginEvent(currentUser.email, 'logout', 'logout');
     }
 
-    await _sb.auth.signOut();
+    await sb.auth.signOut();
     currentUser = null;
     currentProfile = null;
 
@@ -1598,30 +1624,42 @@ async function logout() {
 // PROFILE: LOAD/CREATE
 // ============================================================
 async function loadProfile() {
-    if (!currentUser) return;
+    if (!currentUser || !sb) return;
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
+    try {
+        const { data, error } = await sb
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
 
-    if (data) {
-        currentProfile = data;
-    } else {
-        // Auto-create profile from auth metadata
-        const meta = currentUser.user_metadata || {};
-        const profile = {
-            id: currentUser.id,
+        if (data) {
+            currentProfile = data;
+        } else {
+            // Auto-create profile from auth metadata
+            const meta = currentUser.user_metadata || {};
+            const profile = {
+                id: currentUser.id,
+                email: currentUser.email,
+                name: meta.name || currentUser.email.split('@')[0],
+                access_level: meta.access_level || 'user-regular',
+                dept: meta.dept || 'General',
+                avatar: (meta.name || currentUser.email)[0].toUpperCase(),
+                created_at: new Date().toISOString()
+            };
+            await sb.from('profiles').upsert(profile);
+            currentProfile = profile;
+        }
+    } catch (e) {
+        console.error('loadProfile error:', e);
+        // Fallback profile so app doesn't break
+        currentProfile = {
+            name: currentUser.email.split('@')[0],
             email: currentUser.email,
-            name: meta.name || currentUser.email.split('@')[0],
-            access_level: meta.access_level || 'user-regular',
-            dept: meta.dept || 'General',
-            avatar: (meta.name || currentUser.email)[0].toUpperCase(),
-            created_at: new Date().toISOString()
+            access_level: 'user-regular',
+            dept: 'General',
+            avatar: currentUser.email[0].toUpperCase()
         };
-        await _sb.from('profiles').upsert(profile);
-        currentProfile = profile;
     }
 }
 
@@ -1674,8 +1712,8 @@ async function loadAllData() {
 }
 
 async function updateStats() {
-    const { count: docCount } = await _sb.from('documents').select('*', { count: 'exact', head: true });
-    const { count: tplCount } = await _sb.from('templates').select('*', { count: 'exact', head: true });
+    const { count: docCount } = await sb.from('documents').select('*', { count: 'exact', head: true });
+    const { count: tplCount } = await sb.from('templates').select('*', { count: 'exact', head: true });
 
     document.getElementById('statDocs').textContent = docCount || 0;
     document.getElementById('statTemplates').textContent = tplCount || 0;
@@ -1683,7 +1721,7 @@ async function updateStats() {
     document.getElementById('tplBadge').textContent = tplCount || 0;
 
     // Count storage files
-    const { data: files } = await _sb.storage.from('aios-files').list(currentUser?.id + '/');
+    const { data: files } = await sb.storage.from('aios-files').list(currentUser?.id + '/');
     document.getElementById('statFiles').textContent = files?.length || 0;
     document.getElementById('statAutomations').textContent = 0;
 }
@@ -1692,7 +1730,7 @@ async function updateStats() {
 // DOCUMENTS (Supabase Database)
 // ============================================================
 async function loadDocuments() {
-    const { data, error } = await supabase
+    const { data, error } = await sb
         .from('documents')
         .select('*')
         .order('created_at', { ascending: false });
@@ -1730,7 +1768,7 @@ async function saveDocument(event) {
     const category = document.getElementById('docCategory').value;
     const content = document.getElementById('docContent').value;
 
-    const { error } = await _sb.from('documents').insert({
+    const { error } = await sb.from('documents').insert({
         title, category, content,
         user_id: currentUser.id,
         user_email: currentUser.email,
@@ -1754,7 +1792,7 @@ async function saveDocument(event) {
 async function deleteDocument(id) {
     if (!RBAC.can(currentProfile, 'action:delete-document')) { showToast('Access denied.', 'error'); return; }
     if (!confirm('Delete this document?')) return;
-    await _sb.from('documents').delete().eq('id', id);
+    await sb.from('documents').delete().eq('id', id);
     await loadDocuments();
     await updateStats();
     showToast('Document deleted', 'info');
@@ -1764,7 +1802,7 @@ async function deleteDocument(id) {
 // TEMPLATES (Supabase Database)
 // ============================================================
 async function loadTemplates() {
-    const { data } = await supabase
+    const { data } = await sb
         .from('templates')
         .select('*')
         .order('created_at', { ascending: false });
@@ -1802,7 +1840,7 @@ async function saveTemplate(event) {
     const category = document.getElementById('tplCategory').value;
     const body = document.getElementById('tplBody').value;
 
-    const { error } = await _sb.from('templates').insert({
+    const { error } = await sb.from('templates').insert({
         name, category, body,
         user_id: currentUser.id,
         created_at: new Date().toISOString()
@@ -1825,7 +1863,7 @@ async function saveTemplate(event) {
 async function deleteTemplate(id) {
     if (!RBAC.can(currentProfile, 'action:delete-template')) { showToast('Access denied.', 'error'); return; }
     if (!confirm('Delete this template?')) return;
-    await _sb.from('templates').delete().eq('id', id);
+    await sb.from('templates').delete().eq('id', id);
     await loadTemplates();
     await updateStats();
     showToast('Template deleted', 'info');
@@ -1837,7 +1875,7 @@ async function deleteTemplate(id) {
 async function loadStorageFiles() {
     if (!currentUser) return;
 
-    const { data: files, error } = await _sb.storage
+    const { data: files, error } = await sb.storage
         .from('aios-files')
         .list(currentUser.id + '/', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
 
@@ -1880,7 +1918,7 @@ async function handleFileUpload(event) {
     for (const file of files) {
         const filePath = currentUser.id + '/' + Date.now() + '_' + file.name;
 
-        const { error } = await _sb.storage
+        const { error } = await sb.storage
             .from('aios-files')
             .upload(filePath, file, { upsert: true });
 
@@ -1896,7 +1934,7 @@ async function handleFileUpload(event) {
 }
 
 async function downloadFile(fileName) {
-    const { data, error } = await _sb.storage
+    const { data, error } = await sb.storage
         .from('aios-files')
         .download(currentUser.id + '/' + fileName);
 
@@ -1916,7 +1954,7 @@ async function downloadFile(fileName) {
 async function deleteFile(fileName) {
     if (!confirm('Delete this file from cloud storage?')) return;
 
-    const { error } = await _sb.storage
+    const { error } = await sb.storage
         .from('aios-files')
         .remove([currentUser.id + '/' + fileName]);
 
@@ -1930,27 +1968,13 @@ async function deleteFile(fileName) {
     showToast('File deleted from cloud', 'info');
 }
 
-// Drag and drop
-const uploadZone = document.getElementById('uploadZone');
-if (uploadZone) {
-    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            document.getElementById('fileInput').files = files;
-            handleFileUpload({ target: { files }, target: document.getElementById('fileInput') });
-        }
-    });
-}
+// Drag and drop is initialized in DOMContentLoaded above
 
 // ============================================================
 // TEAM (from profiles table)
 // ============================================================
 async function loadTeam() {
-    const { data } = await _sb.from('profiles').select('*').order('access_level');
+    const { data } = await sb.from('profiles').select('*').order('access_level');
     const list = document.getElementById('teamList');
 
     if (!data || data.length === 0) {
@@ -2014,7 +2038,7 @@ async function changeUserRole(userId) {
         return;
     }
 
-    const { error } = await _sb.from('profiles').update({ access_level: newLevel }).eq('id', userId);
+    const { error } = await sb.from('profiles').update({ access_level: newLevel }).eq('id', userId);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
 
     await loadTeam();
@@ -2035,7 +2059,7 @@ async function adminCreateUser(event) {
     const password = document.getElementById('adminUserPassword').value;
 
     // Sign up the new user via Supabase Auth
-    const { data, error } = await _sb.auth.signUp({
+    const { data, error } = await sb.auth.signUp({
         email, password,
         options: { data: { name, access_level: accessLevel, dept } }
     });
@@ -2047,7 +2071,7 @@ async function adminCreateUser(event) {
 
     // Create their profile
     if (data.user) {
-        await _sb.from('profiles').upsert({
+        await sb.from('profiles').upsert({
             id: data.user.id, email, name, access_level: accessLevel, dept,
             avatar: name.charAt(0).toUpperCase(),
             created_at: new Date().toISOString()
@@ -2075,7 +2099,7 @@ async function adminCreateUser(event) {
 // ============================================================
 async function logLoginEvent(email, eventType, status) {
     try {
-        await _sb.from('login_history').insert({
+        await sb.from('login_history').insert({
             email,
             name: currentProfile?.name || email.split('@')[0],
             access_level: currentProfile?.access_level || 'unknown',
@@ -2092,7 +2116,7 @@ async function logLoginEvent(email, eventType, status) {
 }
 
 async function loadLoginHistory() {
-    const { data } = await supabase
+    const { data } = await sb
         .from('login_history')
         .select('*')
         .order('created_at', { ascending: false })
@@ -2229,8 +2253,8 @@ function viewProfile() {
 }
 
 async function exportData() {
-    const { data: docs } = await _sb.from('documents').select('*');
-    const { data: tpls } = await _sb.from('templates').select('*');
+    const { data: docs } = await sb.from('documents').select('*');
+    const { data: tpls } = await sb.from('templates').select('*');
     const blob = new Blob([JSON.stringify({ profile: currentProfile, documents: docs, templates: tpls }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2298,9 +2322,37 @@ function getBrowserInfo() {
 // ============================================================
 // INITIALIZE
 // ============================================================
-checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!sb) {
+        console.error('Supabase not initialized. Cannot check auth.');
+        return;
+    }
+    try {
+        await checkAuth();
+    } catch (e) {
+        console.error('Auth check failed:', e);
+        hideLoading();
+    }
+    
+    // Setup drag and drop for upload zone
+    const uploadZone = document.getElementById('uploadZone');
+    if (uploadZone) {
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const dt = e.dataTransfer;
+            if (dt.files.length > 0) {
+                const fileInput = document.getElementById('fileInput');
+                fileInput.files = dt.files;
+                handleFileUpload({ target: fileInput });
+            }
+        });
+    }
+});
 console.log('☁ Horison AIOS - Supabase Cloud Edition');
-console.log('✓ Auth, Database & Storage connected');
+console.log('✓ Auth, Database, Storage & RBAC connected');
 </script>
 
 </body>
