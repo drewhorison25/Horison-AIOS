@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horison AIOS - Cloud Powered</title>
+    <title>Horison AIOS</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
@@ -354,18 +354,7 @@
             margin-top: 4px;
         }
 
-        .sidebar-logo .cloud-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background: rgba(72, 187, 120, 0.15);
-            color: #48bb78;
-            border-radius: 6px;
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 6px;
-        }
+        /* Nav section */
 
         .nav-section {
             padding: 16px 16px 8px;
@@ -686,9 +675,6 @@
             <h1 class="login-title">Horison AIOS</h1>
             <p class="login-subtitle">Advanced Internal Operating System</p>
             <p class="login-welcome" id="formSubtitle">Sign in to access your dashboard</p>
-            <div style="margin-top: 8px;">
-                <span class="badge badge-green" style="font-size: 9px;">☁ Cloud Powered</span>
-            </div>
         </div>
 
         <div class="alert alert-error" id="loginAlert"></div>
@@ -784,7 +770,7 @@
     <!-- Status Indicator -->
     <div class="status-indicator">
         <div class="status-dot"></div>
-        <span>Cloud Connected</span>
+        <span>System Online</span>
     </div>
 
     <!-- SIDEBAR -->
@@ -795,7 +781,6 @@
                 <h1>AIOS</h1>
             </div>
             <p>Horison AI Operating System</p>
-            <div class="cloud-badge">☁ Supabase Cloud</div>
         </div>
 
         <nav>
@@ -894,11 +879,41 @@
                 </div>
             </div>
 
-            <!-- AI ASSISTANT PAGE -->
+            <!-- AI ASSISTANT PAGE — Powered by Claude -->
             <div class="page" id="page-ai-assistant">
-                <div class="card">
-                    <div class="card-title">AI Assistant</div>
-                    <p style="color: #718096;">AI Assistant page - feature coming soon!</p>
+                <div class="card" style="display: flex; flex-direction: column; height: calc(100vh - 160px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div class="card-title" style="margin: 0;">AI Assistant</div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #48bb78;"></div>
+                            <span style="font-size: 12px; color: #718096;">Powered by Claude</span>
+                        </div>
+                    </div>
+
+                    <div id="aiChatMessages" style="flex: 1; overflow-y: auto; padding: 16px; background: #0f0f1a; border-radius: 10px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="background: rgba(204, 120, 76, 0.1); border: 1px solid rgba(204, 120, 76, 0.25); padding: 16px 20px; border-radius: 14px; max-width: 85%; font-size: 14px; line-height: 1.7;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #cc784c, #d4956b); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white;">C</div>
+                                <span style="font-weight: 600; font-size: 13px; color: #d4956b;">Claude</span>
+                            </div>
+                            Hi! I'm Claude, your AI assistant for Horison AIOS. I can help you with:
+                            <ul style="margin: 10px 0 0 16px; color: #a0aec0; font-size: 13px; line-height: 1.8;">
+                                <li>Categorizing and analyzing documents</li>
+                                <li>Writing emails, reports, and templates</li>
+                                <li>Amazon PPC strategy and optimization</li>
+                                <li>Creating SOPs and process documentation</li>
+                                <li>Answering any question about your business</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" class="form-control" id="aiChatInput" placeholder="Message Claude..." style="flex: 1;" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendAiMessage();}">
+                        <button class="btn btn-primary" id="aiSendBtn" onclick="sendAiMessage()" style="white-space: nowrap; min-width: 80px;">Send</button>
+                    </div>
+                    <div style="text-align: center; margin-top: 8px;">
+                        <span style="font-size: 10px; color: #4a5568;">Claude AI by Anthropic · Responses may not always be accurate</span>
+                    </div>
                 </div>
             </div>
 
@@ -932,7 +947,45 @@
             <div class="page" id="page-automations">
                 <div class="card">
                     <div class="card-title">Automations</div>
-                    <p style="color: #718096;">Automations page - feature coming soon!</p>
+                    <p style="color: #718096; margin-bottom: 16px;">Build workflows that run automatically on schedule or triggered by events. Describe automations in plain English.</p>
+                    <button class="btn btn-primary" onclick="openCreateAutomation()" style="margin-bottom: 20px;">+ Create Automation</button>
+                    <div id="automationsList"></div>
+                </div>
+
+                <div class="card" id="createAutomationCard" style="display: none;">
+                    <div class="card-title">New Automation</div>
+                    <div class="form-group">
+                        <label class="form-label">Automation Name</label>
+                        <input type="text" class="form-control" id="autoName" placeholder="e.g. Weekly Amazon Summary">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Describe what it should do (natural language)</label>
+                        <textarea class="form-control" id="autoDescription" rows="4" placeholder="e.g. Every Monday at 9am, pull Amazon data and email summary to managers" style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Trigger</label>
+                            <select class="form-control" id="autoTrigger">
+                                <option value="schedule">Scheduled (Cron)</option>
+                                <option value="event">Event-based</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Schedule</label>
+                            <select class="form-control" id="autoSchedule">
+                                <option value="daily-9am">Daily at 9:00 AM</option>
+                                <option value="weekly-mon">Weekly on Monday</option>
+                                <option value="weekly-fri">Weekly on Friday</option>
+                                <option value="monthly-1st">Monthly (1st)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="saveAutomation()">Save Automation</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('createAutomationCard').style.display='none'">Cancel</button>
+                    </div>
                 </div>
             </div>
 
@@ -940,7 +993,46 @@
             <div class="page" id="page-tools">
                 <div class="card">
                     <div class="card-title">Tool Builder</div>
-                    <p style="color: #718096;">Tool Builder page - feature coming soon!</p>
+                    <p style="color: #718096; margin-bottom: 16px;">Request custom tools for your team. AI generates specs, admins approve, developers build.</p>
+                    <button class="btn btn-primary" onclick="openRequestTool()" style="margin-bottom: 20px;">+ Request New Tool</button>
+                    <div id="toolRequestsList"></div>
+                </div>
+
+                <div class="card" id="requestToolCard" style="display: none;">
+                    <div class="card-title">Request a Tool</div>
+                    <div class="form-group">
+                        <label class="form-label">Tool Name</label>
+                        <input type="text" class="form-control" id="toolName" placeholder="e.g. Amazon ASIN Lookup Tool">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">What should this tool do?</label>
+                        <textarea class="form-control" id="toolDescription" rows="4" placeholder="Describe the functionality in detail..." style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Priority</label>
+                            <select class="form-control" id="toolPriority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <select class="form-control" id="toolDept">
+                                <option value="All">All Departments</option>
+                                <option value="PPC">PPC Management</option>
+                                <option value="Account">Account Management</option>
+                                <option value="Development">Development</option>
+                                <option value="Sales">Sales</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="submitToolRequest()">Submit Request</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('requestToolCard').style.display='none'">Cancel</button>
+                    </div>
                 </div>
             </div>
 
@@ -1106,7 +1198,86 @@
             <div class="page" id="page-api-hub">
                 <div class="card">
                     <div class="card-title">API Hub</div>
-                    <p style="color: #718096;">API Hub page - feature coming soon!</p>
+                    <p style="color: #718096; margin-bottom: 20px;">Connect and manage external API integrations for your AIOS platform.</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #ff9900, #ff6600); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">A</div>
+                                <div>
+                                    <div style="font-weight: 600;">Amazon SP-API</div>
+                                    <div style="font-size: 11px; color: #718096;">Seller Central integration</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge badge-green">Connected</span>
+                                <button class="btn btn-sm btn-secondary" onclick="showToast('API settings coming soon', 'info')">Configure</button>
+                            </div>
+                        </div>
+
+                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #4A154B, #611f69); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">S</div>
+                                <div>
+                                    <div style="font-weight: 600;">Slack API</div>
+                                    <div style="font-size: 11px; color: #718096;">Team notifications</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge badge-green">Connected</span>
+                                <button class="btn btn-sm btn-secondary" onclick="showToast('API settings coming soon', 'info')">Configure</button>
+                            </div>
+                        </div>
+
+                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0052CC, #2684FF); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">C</div>
+                                <div>
+                                    <div style="font-weight: 600;">ClickUp API</div>
+                                    <div style="font-size: 11px; color: #718096;">Project management</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge badge-yellow">Pending</span>
+                                <button class="btn btn-sm btn-primary" onclick="showToast('Connection setup coming soon', 'info')">Connect</button>
+                            </div>
+                        </div>
+
+                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #34A853, #0F9D58); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">G</div>
+                                <div>
+                                    <div style="font-weight: 600;">Google Sheets API</div>
+                                    <div style="font-size: 11px; color: #718096;">Data sync & reports</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge badge-green">Connected</span>
+                                <button class="btn btn-sm btn-secondary" onclick="showToast('API settings coming soon', 'info')">Configure</button>
+                            </div>
+                        </div>
+
+                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #7B68EE, #667eea); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">H</div>
+                                <div>
+                                    <div style="font-weight: 600;">Hubstaff API</div>
+                                    <div style="font-size: 11px; color: #718096;">Time tracking</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge badge-gray">Not Connected</span>
+                                <button class="btn btn-sm btn-primary" onclick="showToast('Connection setup coming soon', 'info')">Connect</button>
+                            </div>
+                        </div>
+
+                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px dashed #2d2d4e; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showToast('Custom API integration coming soon', 'info')">
+                            <div style="text-align: center; color: #4a5568;">
+                                <div style="font-size: 24px; margin-bottom: 8px;">+</div>
+                                <div style="font-size: 13px;">Add New API</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1211,6 +1382,24 @@
                         <div class="setting-description">Download all your AIOS data as JSON</div>
                     </div>
                     <button class="btn btn-sm btn-secondary" onclick="exportData()">Export</button>
+                </div>
+            </div>
+            <div class="settings-group" id="settingsApiKeySection" style="display: none;">
+                <div class="settings-group-title">AI Assistant (Admin Only)</div>
+                <div class="setting-item" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                    <div>
+                        <div class="setting-label">Claude API Key</div>
+                        <div class="setting-description">Enter your Anthropic API key to enable the AI Assistant. The key is stored only in your browser session — it is never saved to the database or source code. It will be cleared when you close the browser.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" class="form-control" id="claudeApiKeyInput" placeholder="sk-ant-..." style="flex: 1; font-size: 13px; font-family: monospace;">
+                        <button class="btn btn-sm btn-secondary" onclick="toggleApiKeyVisibility()" style="white-space: nowrap;">Show</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="saveClaudeApiKey()">Save Key</button>
+                        <button class="btn btn-sm btn-danger" onclick="clearClaudeApiKey()">Remove Key</button>
+                    </div>
+                    <div id="apiKeyStatus" style="font-size: 12px; color: #718096;"></div>
                 </div>
             </div>
         </div>
@@ -2196,6 +2385,8 @@ function showPage(pageId) {
     if (pageId === 'storage') loadStorageFiles();
     if (pageId === 'documents') loadDocuments();
     if (pageId === 'templates') loadTemplates();
+    if (pageId === 'automations') renderAutomations();
+    if (pageId === 'tools') renderToolRequests();
 }
 
 function toggleForms() {
@@ -2236,7 +2427,17 @@ document.addEventListener('click', (e) => {
     if (menu && !menu.contains(e.target) && !btn?.contains(e.target) && !userMenu?.contains(e.target)) menu.classList.remove('active');
 });
 
-function openSettings() { document.getElementById('settingsModal').classList.add('active'); document.getElementById('dropdownMenu').classList.remove('active'); if (currentUser) document.getElementById('profileEmail').textContent = currentUser.email; }
+function openSettings() {
+    document.getElementById('settingsModal').classList.add('active');
+    document.getElementById('dropdownMenu').classList.remove('active');
+    if (currentUser) document.getElementById('profileEmail').textContent = currentUser.email;
+    // Show API key section for admin/superuser only
+    const apiSection = document.getElementById('settingsApiKeySection');
+    if (apiSection) {
+        apiSection.style.display = RBAC.isSuperuserOrAdmin(currentProfile) ? 'block' : 'none';
+        if (RBAC.isSuperuserOrAdmin(currentProfile)) updateApiKeyStatus();
+    }
+}
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 function openHelp() { document.getElementById('helpModal').classList.add('active'); document.getElementById('dropdownMenu').classList.remove('active'); }
 function closeHelp() { document.getElementById('helpModal').classList.remove('active'); }
@@ -2320,6 +2521,354 @@ function getBrowserInfo() {
 }
 
 // ============================================================
+// CLAUDE API KEY MANAGEMENT (stored in sessionStorage only)
+// ============================================================
+function getClaudeApiKey() {
+    return sessionStorage.getItem('aios_claude_api_key') || '';
+}
+
+function saveClaudeApiKey() {
+    const input = document.getElementById('claudeApiKeyInput');
+    const key = input.value.trim();
+    if (!key) {
+        showToast('Please enter an API key', 'error');
+        return;
+    }
+    if (!key.startsWith('sk-ant-')) {
+        showToast('Invalid key format. Anthropic keys start with sk-ant-', 'error');
+        return;
+    }
+    sessionStorage.setItem('aios_claude_api_key', key);
+    input.value = '';
+    updateApiKeyStatus();
+    showToast('API key saved to this browser session', 'success');
+}
+
+function clearClaudeApiKey() {
+    sessionStorage.removeItem('aios_claude_api_key');
+    document.getElementById('claudeApiKeyInput').value = '';
+    updateApiKeyStatus();
+    showToast('API key removed', 'info');
+}
+
+function updateApiKeyStatus() {
+    const status = document.getElementById('apiKeyStatus');
+    if (!status) return;
+    const key = getClaudeApiKey();
+    if (key) {
+        const masked = key.substring(0, 10) + '...' + key.substring(key.length - 4);
+        status.innerHTML = `<span style="color: #48bb78;">✓ Key active:</span> <code style="background:#2d2d4e;padding:2px 6px;border-radius:4px;font-size:11px;">${masked}</code> <span style="color:#4a5568;">(session only — clears on browser close)</span>`;
+    } else {
+        status.innerHTML = '<span style="color: #ed8936;">No API key configured.</span> Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: #667eea;">console.anthropic.com</a>';
+    }
+}
+
+function toggleApiKeyVisibility() {
+    const input = document.getElementById('claudeApiKeyInput');
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// ============================================================
+// AI ASSISTANT — Powered by Claude (Anthropic API)
+// ============================================================
+let aiConversationHistory = [];
+
+async function sendAiMessage() {
+    const input = document.getElementById('aiChatInput');
+    const sendBtn = document.getElementById('aiSendBtn');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    // Check if API key is configured
+    if (!getClaudeApiKey()) {
+        showToast('Claude API key not configured. Go to Settings to add your key.', 'error');
+        return;
+    }
+
+    const container = document.getElementById('aiChatMessages');
+
+    // Disable input while processing
+    input.disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.textContent = '...';
+
+    // Render user message
+    container.innerHTML += `
+        <div style="align-self: flex-end; background: linear-gradient(135deg, #667eea, #764ba2); padding: 12px 18px; border-radius: 14px 14px 4px 14px; max-width: 75%; font-size: 14px; line-height: 1.6;">
+            ${escapeHtml(msg)}
+        </div>`;
+    input.value = '';
+
+    // Render thinking bubble
+    const thinkingId = 'thinking-' + Date.now();
+    container.innerHTML += `
+        <div id="${thinkingId}" style="background: rgba(204, 120, 76, 0.1); border: 1px solid rgba(204, 120, 76, 0.25); padding: 14px 20px; border-radius: 14px; max-width: 85%; font-size: 14px; line-height: 1.7;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <div style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, #cc784c, #d4956b); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;">C</div>
+                <span style="font-weight: 600; font-size: 12px; color: #d4956b;">Claude</span>
+            </div>
+            <div class="ai-thinking" style="color: #718096;">
+                <span style="animation: pulse 1.5s infinite;">Thinking...</span>
+            </div>
+        </div>`;
+    container.scrollTop = container.scrollHeight;
+
+    // Add to conversation history
+    aiConversationHistory.push({ role: 'user', content: msg });
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': getClaudeApiKey(),
+                'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1024,
+                system: `You are the AI Assistant for Horison AIOS (Advanced Internal Operating System), an internal platform for Horison Marketing — an Amazon marketing agency.
+
+Your role:
+- Help users with Amazon PPC strategy, listing optimization, and account management
+- Categorize documents (SOP, template, report, context-os, reference)
+- Generate email templates, reports, and client communications
+- Help create automations and workflows
+- Answer questions about company processes and data
+- Be concise, practical, and action-oriented
+
+The current user is: ${currentProfile?.name || 'Unknown'} (${currentProfile?.access_level || 'user-regular'}, ${currentProfile?.dept || 'General'} department).
+
+Keep responses focused and formatted with bullet points when listing items. Use markdown-style formatting.`,
+                messages: aiConversationHistory
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error.message || 'API error');
+        }
+
+        // Extract response text
+        const reply = data.content
+            ?.map(block => block.type === 'text' ? block.text : '')
+            .join('') || 'No response received.';
+
+        // Add to history
+        aiConversationHistory.push({ role: 'assistant', content: reply });
+
+        // Render Claude's response
+        const el = document.getElementById(thinkingId);
+        if (el) {
+            // Convert markdown-like formatting to HTML
+            const formatted = reply
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background:#2d2d4e;padding:2px 6px;border-radius:4px;font-size:12px;">$1</code>')
+                .replace(/^- (.*)/gm, '• $1')
+                .replace(/^(\d+)\. (.*)/gm, '<strong>$1.</strong> $2')
+                .replace(/\n/g, '<br>');
+
+            el.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <div style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, #cc784c, #d4956b); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;">C</div>
+                    <span style="font-weight: 600; font-size: 12px; color: #d4956b;">Claude</span>
+                </div>
+                <div style="color: #e2e8f0;">${formatted}</div>`;
+        }
+
+    } catch (err) {
+        console.error('Claude API error:', err);
+
+        const el = document.getElementById(thinkingId);
+        if (el) {
+            el.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <div style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, #cc784c, #d4956b); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;">C</div>
+                    <span style="font-weight: 600; font-size: 12px; color: #d4956b;">Claude</span>
+                </div>
+                <div style="color: #fc8181;">Unable to reach Claude API. Error: ${escapeHtml(err.message)}<br><br>
+                <span style="color: #718096; font-size: 12px;">This feature requires the Anthropic API key to be configured. Contact your admin to set up the API integration.</span></div>`;
+        }
+
+        // Remove failed message from history
+        aiConversationHistory.pop();
+    }
+
+    // Re-enable input
+    input.disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+    input.focus();
+    container.scrollTop = container.scrollHeight;
+}
+
+function clearAiChat() {
+    aiConversationHistory = [];
+    const container = document.getElementById('aiChatMessages');
+    container.innerHTML = `
+        <div style="background: rgba(204, 120, 76, 0.1); border: 1px solid rgba(204, 120, 76, 0.25); padding: 16px 20px; border-radius: 14px; max-width: 85%; font-size: 14px; line-height: 1.7;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #cc784c, #d4956b); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white;">C</div>
+                <span style="font-weight: 600; font-size: 13px; color: #d4956b;">Claude</span>
+            </div>
+            Conversation cleared. How can I help you?
+        </div>`;
+    showToast('Chat cleared', 'info');
+}
+
+// ============================================================
+// AUTOMATIONS
+// ============================================================
+let automations = [];
+
+function openCreateAutomation() {
+    if (!RBAC.can(currentProfile, 'action:create-automation')) {
+        showToast('Access denied. Manager+ access required.', 'error');
+        return;
+    }
+    document.getElementById('createAutomationCard').style.display = 'block';
+}
+
+async function saveAutomation() {
+    const name = document.getElementById('autoName').value.trim();
+    const description = document.getElementById('autoDescription').value.trim();
+    const trigger = document.getElementById('autoTrigger').value;
+    const schedule = document.getElementById('autoSchedule').value;
+
+    if (!name) { showToast('Please enter an automation name', 'error'); return; }
+
+    automations.push({
+        id: Date.now(),
+        name, description, trigger, schedule,
+        enabled: true,
+        created_by: currentProfile?.name || 'Unknown',
+        created_at: new Date().toISOString()
+    });
+
+    document.getElementById('createAutomationCard').style.display = 'none';
+    document.getElementById('autoName').value = '';
+    document.getElementById('autoDescription').value = '';
+    renderAutomations();
+    showToast('Automation created!', 'success');
+}
+
+function renderAutomations() {
+    const list = document.getElementById('automationsList');
+    if (automations.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No automations yet. Click "+ Create Automation" to build one.</p>';
+        return;
+    }
+
+    list.innerHTML = automations.map(a => `
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-icon" style="font-size: 20px;">${a.enabled ? '⚡' : '⏸'}</div>
+                <div>
+                    <div class="file-name">${escapeHtml(a.name)}</div>
+                    <div class="file-meta">
+                        <span class="badge ${a.enabled ? 'badge-green' : 'badge-gray'}">${a.enabled ? 'Active' : 'Paused'}</span>
+                        · ${a.trigger} · ${a.schedule} · by ${escapeHtml(a.created_by)}
+                    </div>
+                </div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleAutomation(${a.id})">${a.enabled ? 'Pause' : 'Enable'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAutomation(${a.id})">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleAutomation(id) {
+    const a = automations.find(x => x.id === id);
+    if (a) { a.enabled = !a.enabled; renderAutomations(); }
+}
+
+function deleteAutomation(id) {
+    if (!confirm('Delete this automation?')) return;
+    automations = automations.filter(x => x.id !== id);
+    renderAutomations();
+    showToast('Automation deleted', 'info');
+}
+
+// ============================================================
+// TOOL BUILDER
+// ============================================================
+let toolRequests = [];
+
+function openRequestTool() {
+    document.getElementById('requestToolCard').style.display = 'block';
+}
+
+function submitToolRequest() {
+    const name = document.getElementById('toolName').value.trim();
+    const description = document.getElementById('toolDescription').value.trim();
+    const priority = document.getElementById('toolPriority').value;
+    const dept = document.getElementById('toolDept').value;
+
+    if (!name) { showToast('Please enter a tool name', 'error'); return; }
+
+    toolRequests.push({
+        id: Date.now(),
+        name, description, priority, dept,
+        status: 'pending',
+        requested_by: currentProfile?.name || 'Unknown',
+        created_at: new Date().toISOString()
+    });
+
+    document.getElementById('requestToolCard').style.display = 'none';
+    document.getElementById('toolName').value = '';
+    document.getElementById('toolDescription').value = '';
+    renderToolRequests();
+    showToast('Tool request submitted!', 'success');
+}
+
+function renderToolRequests() {
+    const list = document.getElementById('toolRequestsList');
+    if (toolRequests.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No tool requests yet. Click "+ Request New Tool" to submit one.</p>';
+        return;
+    }
+
+    const statusBadge = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red', building: 'badge-blue' };
+
+    list.innerHTML = toolRequests.map(t => `
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-icon" style="font-size: 20px;">🔧</div>
+                <div>
+                    <div class="file-name">${escapeHtml(t.name)}</div>
+                    <div class="file-meta">
+                        <span class="badge ${statusBadge[t.status] || 'badge-gray'}">${t.status}</span>
+                        · Priority: ${t.priority} · ${t.dept} · by ${escapeHtml(t.requested_by)}
+                    </div>
+                </div>
+            </div>
+            <div class="file-actions">
+                ${RBAC.isSuperuserOrAdmin(currentProfile) && t.status === 'pending' ? `
+                    <button class="btn btn-sm btn-primary" onclick="approveToolRequest(${t.id})">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectToolRequest(${t.id})">Reject</button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function approveToolRequest(id) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can approve tools', 'error'); return; }
+    const t = toolRequests.find(x => x.id === id);
+    if (t) { t.status = 'approved'; renderToolRequests(); showToast('Tool request approved!', 'success'); }
+}
+
+function rejectToolRequest(id) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can reject tools', 'error'); return; }
+    const t = toolRequests.find(x => x.id === id);
+    if (t) { t.status = 'rejected'; renderToolRequests(); showToast('Tool request rejected', 'info'); }
+}
+
+// ============================================================
 // INITIALIZE
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -2351,7 +2900,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-console.log('☁ Horison AIOS - Supabase Cloud Edition');
+console.log('Horison AIOS - Ready');
 console.log('✓ Auth, Database, Storage & RBAC connected');
 </script>
 
