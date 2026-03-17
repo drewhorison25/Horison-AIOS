@@ -990,47 +990,96 @@
 
             <!-- TOOLS PAGE -->
             <div class="page" id="page-tools">
-                <div class="card">
-                    <div class="card-title">Tool Builder</div>
-                    <p style="color: #718096; margin-bottom: 16px;">Request custom tools for your team. AI generates specs, admins approve, developers build.</p>
-                    <button class="btn btn-primary" onclick="openRequestTool()" style="margin-bottom: 20px;">+ Request New Tool</button>
-                    <div id="toolRequestsList"></div>
+                <!-- Tab Navigation -->
+                <div style="display: flex; gap: 4px; margin-bottom: 20px; background: #1a1a2e; border-radius: 12px; padding: 4px; border: 1px solid #2d2d4e;">
+                    <button class="btn btn-secondary tool-tab active" id="tabRequests" onclick="switchToolTab('requests')" style="flex: 1; border: none; border-radius: 8px;">Requests</button>
+                    <button class="btn btn-secondary tool-tab" id="tabDevQueue" onclick="switchToolTab('devqueue')" style="flex: 1; border: none; border-radius: 8px;">Dev Queue</button>
+                    <button class="btn btn-secondary tool-tab" id="tabLibrary" onclick="switchToolTab('library')" style="flex: 1; border: none; border-radius: 8px;">Tool Library</button>
                 </div>
 
-                <div class="card" id="requestToolCard" style="display: none;">
-                    <div class="card-title">Request a Tool</div>
-                    <div class="form-group">
-                        <label class="form-label">Tool Name</label>
-                        <input type="text" class="form-control" id="toolName" placeholder="e.g. Amazon ASIN Lookup Tool">
+                <!-- REQUESTS TAB -->
+                <div id="toolTab-requests">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <div class="card-title" style="margin: 0;">Tool Requests</div>
+                                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Submit requests for custom tools. Admins review and approve.</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="openRequestTool()">+ New Request</button>
+                        </div>
+                        <div id="toolRequestsList"></div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">What should this tool do?</label>
-                        <textarea class="form-control" id="toolDescription" rows="4" placeholder="Describe the functionality in detail..." style="resize: vertical;"></textarea>
-                    </div>
-                    <div class="grid-2" style="margin-bottom: 16px;">
+
+                    <div class="card" id="requestToolCard" style="display: none;">
+                        <div class="card-title">Request a Tool</div>
                         <div class="form-group">
-                            <label class="form-label">Priority</label>
-                            <select class="form-control" id="toolPriority">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
+                            <label class="form-label">Tool Name</label>
+                            <input type="text" class="form-control" id="toolName" placeholder="e.g. Amazon ASIN Lookup Tool">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Department</label>
-                            <select class="form-control" id="toolDept">
-                                <option value="All">All Departments</option>
-                                <option value="PPC">PPC Management</option>
-                                <option value="Account">Account Management</option>
-                                <option value="Development">Development</option>
-                                <option value="Sales">Sales</option>
-                            </select>
+                            <label class="form-label">What should this tool do?</label>
+                            <textarea class="form-control" id="toolDescription" rows="4" placeholder="Describe the functionality in detail..." style="resize: vertical;"></textarea>
+                        </div>
+                        <div class="grid-2" style="margin-bottom: 16px;">
+                            <div class="form-group">
+                                <label class="form-label">Priority</label>
+                                <select class="form-control" id="toolPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Department</label>
+                                <select class="form-control" id="toolDept">
+                                    <option value="All">All Departments</option>
+                                    <option value="PPC">PPC Management</option>
+                                    <option value="Account">Account Management</option>
+                                    <option value="Development">Development</option>
+                                    <option value="Sales">Sales</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="submitToolRequest()">Submit Request</button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('requestToolCard').style.display='none'">Cancel</button>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" onclick="submitToolRequest()">Submit Request</button>
-                        <button class="btn btn-secondary" onclick="document.getElementById('requestToolCard').style.display='none'">Cancel</button>
+                </div>
+
+                <!-- DEV QUEUE TAB -->
+                <div id="toolTab-devqueue" style="display: none;">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <div class="card-title" style="margin: 0;">Development Queue</div>
+                                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Approved tools being built. Track progress from spec → development → testing → live.</p>
+                            </div>
+                        </div>
+                        <div id="devQueueList"></div>
+                    </div>
+                </div>
+
+                <!-- TOOL LIBRARY TAB -->
+                <div id="toolTab-library" style="display: none;">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <div class="card-title" style="margin: 0;">Tool Library</div>
+                                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Live tools ready to use. Click "Run" to launch.</p>
+                            </div>
+                        </div>
+                        <div id="toolLibraryList"></div>
+                    </div>
+
+                    <!-- Tool Runner Area -->
+                    <div class="card" id="toolRunnerCard" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div class="card-title" style="margin: 0;" id="toolRunnerTitle">Tool</div>
+                            <button class="btn btn-sm btn-secondary" onclick="document.getElementById('toolRunnerCard').style.display='none'">Close</button>
+                        </div>
+                        <div id="toolRunnerContent"></div>
                     </div>
                 </div>
             </div>
@@ -2385,7 +2434,7 @@ function showPage(pageId) {
     if (pageId === 'documents') loadDocuments();
     if (pageId === 'templates') loadTemplates();
     if (pageId === 'automations') renderAutomations();
-    if (pageId === 'tools') renderToolRequests();
+    if (pageId === 'tools') { renderToolRequests(); renderToolLibrary(); }
 }
 
 function toggleForms() {
@@ -2793,10 +2842,73 @@ function deleteAutomation(id) {
 }
 
 // ============================================================
-// TOOL BUILDER
+// TOOL BUILDER — Full Pipeline: Request → Approve → Dev → Library → Run
 // ============================================================
 let toolRequests = [];
 
+// Pre-loaded sample tools in the library (live & runnable)
+let toolLibrary = [
+    {
+        id: 'asin-lookup',
+        name: 'ASIN Lookup Tool',
+        description: 'Look up Amazon product details by ASIN',
+        icon: '🔍',
+        dept: 'PPC',
+        type: 'runnable',
+        runner: 'asinLookup'
+    },
+    {
+        id: 'acos-calc',
+        name: 'ACoS Calculator',
+        description: 'Calculate Advertising Cost of Sales from spend and revenue',
+        icon: '📊',
+        dept: 'PPC',
+        type: 'runnable',
+        runner: 'acosCalculator'
+    },
+    {
+        id: 'email-gen',
+        name: 'Client Email Generator',
+        description: 'Generate professional client emails from templates',
+        icon: '✉️',
+        dept: 'Account',
+        type: 'runnable',
+        runner: 'emailGenerator'
+    },
+    {
+        id: 'keyword-tool',
+        name: 'Keyword Density Analyzer',
+        description: 'Analyze keyword frequency in listing copy',
+        icon: '🔤',
+        dept: 'PPC',
+        type: 'runnable',
+        runner: 'keywordAnalyzer'
+    }
+];
+
+// ── Tab Switching ──
+function switchToolTab(tab) {
+    document.querySelectorAll('[id^="toolTab-"]').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tool-tab').forEach(el => {
+        el.classList.remove('active');
+        el.style.background = '';
+        el.style.color = '';
+    });
+
+    document.getElementById('toolTab-' + tab).style.display = 'block';
+    const activeTab = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+        activeTab.style.color = 'white';
+    }
+
+    if (tab === 'requests') renderToolRequests();
+    if (tab === 'devqueue') renderDevQueue();
+    if (tab === 'library') renderToolLibrary();
+}
+
+// ── REQUESTS TAB ──
 function openRequestTool() {
     document.getElementById('requestToolCard').style.display = 'block';
 }
@@ -2813,6 +2925,7 @@ function submitToolRequest() {
         id: Date.now(),
         name, description, priority, dept,
         status: 'pending',
+        dev_status: null,
         requested_by: currentProfile?.name || 'Unknown',
         created_at: new Date().toISOString()
     });
@@ -2827,11 +2940,11 @@ function submitToolRequest() {
 function renderToolRequests() {
     const list = document.getElementById('toolRequestsList');
     if (toolRequests.length === 0) {
-        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No tool requests yet. Click "+ Request New Tool" to submit one.</p>';
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No tool requests yet. Click "+ New Request" to submit one.</p>';
         return;
     }
 
-    const statusBadge = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red', building: 'badge-blue' };
+    const statusColors = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red', building: 'badge-blue' };
 
     list.innerHTML = toolRequests.map(t => `
         <div class="file-item">
@@ -2840,9 +2953,10 @@ function renderToolRequests() {
                 <div>
                     <div class="file-name">${escapeHtml(t.name)}</div>
                     <div class="file-meta">
-                        <span class="badge ${statusBadge[t.status] || 'badge-gray'}">${t.status}</span>
-                        · Priority: ${t.priority} · ${t.dept} · by ${escapeHtml(t.requested_by)}
+                        <span class="badge ${statusColors[t.status] || 'badge-gray'}">${t.status}</span>
+                        · Priority: <strong>${t.priority}</strong> · ${t.dept} · by ${escapeHtml(t.requested_by)} · ${timeAgo(t.created_at)}
                     </div>
+                    ${t.description ? `<div style="font-size: 12px; color: #4a5568; margin-top: 4px;">${escapeHtml(t.description).substring(0, 120)}${t.description.length > 120 ? '...' : ''}</div>` : ''}
                 </div>
             </div>
             <div class="file-actions">
@@ -2850,21 +2964,464 @@ function renderToolRequests() {
                     <button class="btn btn-sm btn-primary" onclick="approveToolRequest(${t.id})">Approve</button>
                     <button class="btn btn-sm btn-danger" onclick="rejectToolRequest(${t.id})">Reject</button>
                 ` : ''}
+                ${t.status === 'approved' && !t.dev_status ? `
+                    <span class="badge badge-green" style="font-size: 10px;">Ready for Dev</span>
+                ` : ''}
             </div>
         </div>
     `).join('');
 }
 
-function approveToolRequest(id) {
+async function approveToolRequest(id) {
     if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can approve tools', 'error'); return; }
     const t = toolRequests.find(x => x.id === id);
-    if (t) { t.status = 'approved'; renderToolRequests(); showToast('Tool request approved!', 'success'); }
+    if (!t) return;
+
+    t.status = 'approved';
+    t.dev_status = 'development';
+    t.approved_by = currentProfile?.name;
+    t.approved_at = new Date().toISOString();
+    renderToolRequests();
+    showToast('Tool approved! Claude is building it...', 'success');
+
+    // Auto-build with Claude
+    await autoBuildTool(t);
+}
+
+async function autoBuildTool(tool) {
+    const apiKey = getClaudeApiKey();
+
+    if (!apiKey) {
+        tool.dev_status = 'spec';
+        tool.build_error = 'No Claude API key configured. Set it in Settings to enable auto-build.';
+        showToast('Auto-build skipped — no API key. Tool moved to Dev Queue for manual build.', 'error');
+        renderDevQueue();
+        return;
+    }
+
+    tool.dev_status = 'development';
+    tool.build_status_msg = 'Claude is generating the tool...';
+    renderDevQueue();
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 4096,
+                system: `You are a tool builder for Horison AIOS, an internal platform for Horison Marketing (an Amazon marketing agency).
+
+When given a tool request, you MUST respond with ONLY a valid JSON object (no markdown, no backticks, no explanation) in this exact format:
+
+{
+  "icon": "emoji icon for the tool",
+  "html": "the complete HTML for the tool interface including form inputs, buttons, and result areas. Use inline styles matching dark theme (background: #1a1a2e, #0f0f1a, color: #e2e8f0, borders: #2d2d4e, accent: #667eea). Include IDs for inputs and result divs.",
+  "js": "a single self-contained JavaScript function named runCustomTool_TOOLID() that reads inputs, processes data, and renders results. Use getElementById. No external dependencies. Replace TOOLID with a safe identifier based on the tool name."
+}
+
+Rules:
+- The HTML should have form inputs styled with: class="form-control" style="background:#0f0f1a;border:2px solid #2d2d4e;border-radius:10px;color:#e2e8f0;padding:14px 16px;width:100%;font-size:15px;margin-bottom:12px;"
+- Buttons should use: style="padding:8px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;"
+- Results should go in a div with a unique ID
+- The JS function must be completely self-contained
+- Make the tool actually functional and useful
+- ONLY output the JSON object, nothing else`,
+                messages: [{
+                    role: 'user',
+                    content: `Build this tool:\n\nName: ${tool.name}\nDescription: ${tool.description}\nDepartment: ${tool.dept}\nTool ID: tool_${tool.id}`
+                }]
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error.message);
+
+        const text = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || '';
+
+        // Parse the JSON response (handle possible markdown wrapping)
+        const jsonStr = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        const toolSpec = JSON.parse(jsonStr);
+
+        // Store the generated tool
+        tool.dev_status = 'live';
+        tool.generated = toolSpec;
+        tool.build_status_msg = 'Built successfully by Claude';
+
+        // Auto-publish to library
+        toolLibrary.push({
+            id: 'auto-' + tool.id,
+            name: tool.name,
+            description: tool.description || 'AI-generated tool',
+            icon: toolSpec.icon || '🤖',
+            dept: tool.dept,
+            type: 'runnable',
+            runner: 'auto-' + tool.id,
+            generated: toolSpec
+        });
+
+        tool.dev_status = 'published';
+        tool.status = 'published';
+
+        renderDevQueue();
+        renderToolLibrary();
+        showToast(tool.name + ' built and published by Claude!', 'success');
+
+    } catch (err) {
+        console.error('Auto-build failed:', err);
+        tool.dev_status = 'spec';
+        tool.build_error = err.message;
+        tool.build_status_msg = 'Build failed: ' + err.message;
+        renderDevQueue();
+        showToast('Auto-build failed: ' + err.message + '. Tool moved to Dev Queue.', 'error');
+    }
 }
 
 function rejectToolRequest(id) {
     if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can reject tools', 'error'); return; }
     const t = toolRequests.find(x => x.id === id);
     if (t) { t.status = 'rejected'; renderToolRequests(); showToast('Tool request rejected', 'info'); }
+}
+
+async function retryBuildTool(id) {
+    const t = toolRequests.find(x => x.id === id);
+    if (!t) return;
+    t.build_error = null;
+    t.build_status_msg = 'Retrying build with Claude...';
+    renderDevQueue();
+    showToast('Rebuilding ' + t.name + '...', 'info');
+    await autoBuildTool(t);
+}
+
+// ── DEV QUEUE TAB ──
+const devStages = ['spec', 'development', 'testing', 'live'];
+const devStageLabels = { spec: 'Spec / Planning', development: 'In Development', testing: 'Testing / QA', live: 'Live' };
+const devStageColors = { spec: 'badge-yellow', development: 'badge-blue', testing: 'badge-green', live: 'badge-green' };
+const devStageIcons = { spec: '📋', development: '💻', testing: '🧪', live: '🚀' };
+
+function renderDevQueue() {
+    const list = document.getElementById('devQueueList');
+    const devTools = toolRequests.filter(t => t.status === 'approved' && t.dev_status);
+
+    if (devTools.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No tools in development. Approve a request to add it here.</p>';
+        return;
+    }
+
+    list.innerHTML = devTools.map(t => {
+        const stageIndex = devStages.indexOf(t.dev_status);
+        const progress = ((stageIndex + 1) / devStages.length) * 100;
+
+        return `
+            <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 14px;">
+                    <div>
+                        <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">${escapeHtml(t.name)}</div>
+                        <div style="font-size: 12px; color: #718096;">Requested by ${escapeHtml(t.requested_by)} · Approved by ${escapeHtml(t.approved_by || '—')}</div>
+                    </div>
+                    <span class="badge ${devStageColors[t.dev_status]}">${devStageIcons[t.dev_status]} ${devStageLabels[t.dev_status]}</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="background: #2d2d4e; border-radius: 6px; height: 8px; margin-bottom: 14px; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: ${progress}%; border-radius: 6px; transition: width 0.5s;"></div>
+                </div>
+
+                <!-- Stage Steps -->
+                <div style="display: flex; justify-content: space-between; margin-bottom: 14px;">
+                    ${devStages.map((stage, i) => `
+                        <div style="text-align: center; flex: 1;">
+                            <div style="font-size: 16px; margin-bottom: 4px; opacity: ${i <= stageIndex ? '1' : '0.3'};">${devStageIcons[stage]}</div>
+                            <div style="font-size: 10px; color: ${i <= stageIndex ? '#e2e8f0' : '#4a5568'}; font-weight: ${i === stageIndex ? '700' : '400'};">${devStageLabels[stage]}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${t.build_status_msg ? `
+                    <div style="font-size: 12px; color: ${t.build_error ? '#fc8181' : '#48bb78'}; margin-bottom: 10px; padding: 8px 12px; background: ${t.build_error ? 'rgba(252,129,129,0.08)' : 'rgba(72,187,120,0.08)'}; border-radius: 6px;">
+                        ${t.build_error ? '⚠️' : '✓'} ${escapeHtml(t.build_status_msg)}
+                    </div>
+                ` : ''}
+
+                ${RBAC.isSuperuserOrAdmin(currentProfile) ? `
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${t.build_error ? `
+                            <button class="btn btn-sm btn-primary" onclick="retryBuildTool(${t.id})">🔄 Rebuild with Claude</button>
+                        ` : t.dev_status !== 'live' && t.dev_status !== 'published' ? `
+                            <button class="btn btn-sm btn-primary" onclick="advanceDevStage(${t.id})">Advance to Next Stage →</button>
+                        ` : t.dev_status === 'live' ? `
+                            <button class="btn btn-sm btn-primary" onclick="publishToLibrary(${t.id})">🚀 Publish to Library</button>
+                        ` : ''}
+                        ${t.dev_status !== 'published' ? `<button class="btn btn-sm btn-secondary" onclick="regressDevStage(${t.id})">← Previous Stage</button>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function advanceDevStage(id) {
+    const t = toolRequests.find(x => x.id === id);
+    if (!t) return;
+    const i = devStages.indexOf(t.dev_status);
+    if (i < devStages.length - 1) {
+        t.dev_status = devStages[i + 1];
+        renderDevQueue();
+        showToast(`Moved to: ${devStageLabels[t.dev_status]}`, 'success');
+    }
+}
+
+function regressDevStage(id) {
+    const t = toolRequests.find(x => x.id === id);
+    if (!t) return;
+    const i = devStages.indexOf(t.dev_status);
+    if (i > 0) {
+        t.dev_status = devStages[i - 1];
+        renderDevQueue();
+        showToast(`Moved back to: ${devStageLabels[t.dev_status]}`, 'info');
+    }
+}
+
+function publishToLibrary(id) {
+    const t = toolRequests.find(x => x.id === id);
+    if (!t) return;
+
+    toolLibrary.push({
+        id: 'custom-' + t.id,
+        name: t.name,
+        description: t.description || 'Custom tool',
+        icon: '🔧',
+        dept: t.dept,
+        type: 'info',
+        runner: null
+    });
+
+    // Remove from dev queue
+    t.dev_status = 'published';
+    t.status = 'published';
+
+    renderDevQueue();
+    showToast(t.name + ' published to Tool Library!', 'success');
+}
+
+// ── TOOL LIBRARY TAB ──
+function renderToolLibrary() {
+    const list = document.getElementById('toolLibraryList');
+
+    if (toolLibrary.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No tools in the library yet.</p>';
+        return;
+    }
+
+    list.innerHTML = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        ${toolLibrary.map(t => `
+            <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e; transition: all 0.2s; cursor: pointer;" 
+                 onmouseenter="this.style.borderColor='#667eea'" onmouseleave="this.style.borderColor='#2d2d4e'"
+                 onclick="runTool('${escapeHtml(t.runner || '')}', '${escapeHtml(t.name)}')">
+                <div style="font-size: 28px; margin-bottom: 12px;">${t.icon}</div>
+                <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(t.name)}</div>
+                <div style="font-size: 12px; color: #718096; margin-bottom: 12px;">${escapeHtml(t.description)}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="badge badge-blue" style="font-size: 10px;">${t.dept}</span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        ${t.generated ? '<span class="badge badge-yellow" style="font-size: 9px;">AI Built</span>' : ''}
+                        <span style="font-size: 11px; color: #48bb78; font-weight: 600;">▶ Run</span>
+                    </div>
+                </div>
+            </div>
+        `).join('')}
+    </div>`;
+}
+
+// ── RUNNABLE TOOLS ──
+function runTool(runner, title) {
+    document.getElementById('toolRunnerCard').style.display = 'block';
+    document.getElementById('toolRunnerTitle').textContent = title;
+
+    const content = document.getElementById('toolRunnerContent');
+
+    // Check if it's an AI-generated tool
+    const libTool = toolLibrary.find(t => t.runner === runner);
+    if (libTool && libTool.generated) {
+        const spec = libTool.generated;
+        content.innerHTML = spec.html || '<p style="color:#718096;">No interface generated.</p>';
+
+        // Inject and execute the generated JS
+        if (spec.js) {
+            try {
+                const script = document.createElement('script');
+                script.textContent = spec.js;
+                document.body.appendChild(script);
+            } catch (e) {
+                console.error('Tool JS error:', e);
+                content.innerHTML += `<div style="margin-top:12px;color:#fc8181;font-size:12px;">Script error: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+        return;
+    }
+
+    // Built-in tools
+    const tools = {
+        acosCalculator: `
+            <p style="color: #718096; margin-bottom: 16px;">Calculate your Advertising Cost of Sales (ACoS)</p>
+            <div class="grid-2" style="margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Ad Spend ($)</label>
+                    <input type="number" class="form-control" id="runAdSpend" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ad Revenue ($)</label>
+                    <input type="number" class="form-control" id="runAdRevenue" placeholder="0.00" step="0.01">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="calcAcos()">Calculate</button>
+            <div id="acosResult" style="margin-top: 16px;"></div>
+        `,
+        asinLookup: `
+            <p style="color: #718096; margin-bottom: 16px;">Enter an Amazon ASIN to look up product details</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <input type="text" class="form-control" id="runAsin" placeholder="e.g. B08N5WRWNW" style="flex: 1; text-transform: uppercase;">
+                <button class="btn btn-primary" onclick="lookupAsin()">Lookup</button>
+            </div>
+            <div id="asinResult"></div>
+        `,
+        emailGenerator: `
+            <p style="color: #718096; margin-bottom: 16px;">Generate a professional client email</p>
+            <div class="form-group">
+                <label class="form-label">Email Type</label>
+                <select class="form-control" id="runEmailType">
+                    <option value="onboarding">Client Onboarding</option>
+                    <option value="monthly">Monthly Report Summary</option>
+                    <option value="strategy">Strategy Recommendation</option>
+                    <option value="issue">Issue Notification</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Client Name</label>
+                <input type="text" class="form-control" id="runClientName" placeholder="e.g. Acme Corp">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Key Details</label>
+                <textarea class="form-control" id="runEmailDetails" rows="3" placeholder="Any specifics to include..." style="resize: vertical;"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="generateEmail()">Generate Email</button>
+            <div id="emailResult" style="margin-top: 16px;"></div>
+        `,
+        keywordAnalyzer: `
+            <p style="color: #718096; margin-bottom: 16px;">Paste listing copy to analyze keyword frequency</p>
+            <div class="form-group">
+                <label class="form-label">Listing Text</label>
+                <textarea class="form-control" id="runKeywordText" rows="6" placeholder="Paste your Amazon listing title, bullets, or description here..." style="resize: vertical;"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="analyzeKeywords()">Analyze</button>
+            <div id="keywordResult" style="margin-top: 16px;"></div>
+        `
+    };
+
+    content.innerHTML = tools[runner] || '<p style="color: #718096;">This tool has no runner configured yet.</p>';
+}
+
+// Tool Runners
+function calcAcos() {
+    const spend = parseFloat(document.getElementById('runAdSpend').value) || 0;
+    const revenue = parseFloat(document.getElementById('runAdRevenue').value) || 0;
+    const result = document.getElementById('acosResult');
+    if (revenue === 0) { result.innerHTML = '<span style="color: #fc8181;">Revenue cannot be zero.</span>'; return; }
+    const acos = ((spend / revenue) * 100).toFixed(2);
+    const roas = (revenue / spend).toFixed(2);
+    const color = acos <= 25 ? '#48bb78' : acos <= 40 ? '#ed8936' : '#fc8181';
+    result.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div style="background: #1a1a2e; padding: 16px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 24px; font-weight: 700; color: ${color};">${acos}%</div>
+                <div style="font-size: 11px; color: #718096; margin-top: 4px;">ACoS</div>
+            </div>
+            <div style="background: #1a1a2e; padding: 16px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 24px; font-weight: 700; color: #667eea;">${roas}x</div>
+                <div style="font-size: 11px; color: #718096; margin-top: 4px;">ROAS</div>
+            </div>
+            <div style="background: #1a1a2e; padding: 16px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 24px; font-weight: 700; color: #48bb78;">$${(revenue - spend).toFixed(2)}</div>
+                <div style="font-size: 11px; color: #718096; margin-top: 4px;">Profit</div>
+            </div>
+        </div>
+        <div style="margin-top: 12px; font-size: 13px; color: #a0aec0;">
+            ${acos <= 25 ? '✅ Excellent ACoS — campaign is very profitable.' : acos <= 40 ? '⚠️ Moderate ACoS — consider optimizing keywords.' : '🔴 High ACoS — review targeting and bids.'}
+        </div>`;
+}
+
+function lookupAsin() {
+    const asin = document.getElementById('runAsin').value.trim().toUpperCase();
+    const result = document.getElementById('asinResult');
+    if (!asin || asin.length !== 10) { result.innerHTML = '<span style="color: #fc8181;">Enter a valid 10-character ASIN.</span>'; return; }
+    result.innerHTML = `
+        <div style="background: #1a1a2e; padding: 20px; border-radius: 10px;">
+            <div style="font-weight: 600; margin-bottom: 8px;">ASIN: ${asin}</div>
+            <div style="font-size: 13px; color: #a0aec0; line-height: 1.8;">
+                <strong>Marketplace:</strong> Amazon.com (US)<br>
+                <strong>Link:</strong> <a href="https://www.amazon.com/dp/${asin}" target="_blank" style="color: #667eea;">amazon.com/dp/${asin}</a><br>
+                <strong>Status:</strong> <span class="badge badge-green">Active</span><br><br>
+                <em style="color: #718096;">For full product data (title, price, BSR, reviews), connect the Amazon SP-API in the API Hub.</em>
+            </div>
+        </div>`;
+}
+
+function generateEmail() {
+    const type = document.getElementById('runEmailType').value;
+    const client = document.getElementById('runClientName').value.trim() || '[Client Name]';
+    const details = document.getElementById('runEmailDetails').value.trim();
+    const result = document.getElementById('emailResult');
+
+    const templates = {
+        onboarding: `Subject: Welcome to Horison Marketing, ${client}!\n\nHi ${client} team,\n\nWelcome aboard! We're excited to partner with you on your Amazon growth journey.\n\nHere's what happens next:\n1. Account audit (completed within 48 hours)\n2. Strategy call to align on goals\n3. Campaign launch within the first week\n\n${details ? 'Additional notes: ' + details + '\n\n' : ''}Looking forward to working together!\n\nBest regards,\n${currentProfile?.name || 'Your Account Manager'}\nHorison Marketing`,
+        monthly: `Subject: ${client} — Monthly Performance Report\n\nHi ${client} team,\n\nPlease find below your monthly Amazon advertising summary:\n\n• Total Ad Spend: [Insert]\n• Total Ad Revenue: [Insert]\n• ACoS: [Insert]\n• Key wins: [Insert]\n\n${details ? 'Notes: ' + details + '\n\n' : ''}Happy to jump on a call to discuss next steps.\n\nBest,\n${currentProfile?.name || 'Your Account Manager'}`,
+        strategy: `Subject: Strategy Recommendation for ${client}\n\nHi ${client} team,\n\nBased on our analysis, here are our recommendations:\n\n1. [Recommendation 1]\n2. [Recommendation 2]\n3. [Recommendation 3]\n\n${details ? 'Context: ' + details + '\n\n' : ''}Let us know if you'd like to discuss implementation.\n\nBest,\n${currentProfile?.name || 'Your Account Manager'}`,
+        issue: `Subject: Action Required — ${client} Account Update\n\nHi ${client} team,\n\nWe wanted to flag an issue we've identified:\n\n${details || '[Describe the issue here]'}\n\nOur team is already working on a resolution. We'll provide an update within 24 hours.\n\nBest,\n${currentProfile?.name || 'Your Account Manager'}`
+    };
+
+    const email = templates[type] || templates.onboarding;
+    result.innerHTML = `
+        <div style="background: #1a1a2e; padding: 20px; border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span style="font-size: 12px; color: #48bb78; font-weight: 600;">Generated Email</span>
+                <button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('emailOutput').innerText); showToast('Copied!', 'success');">Copy</button>
+            </div>
+            <pre id="emailOutput" style="white-space: pre-wrap; font-family: inherit; font-size: 13px; color: #e2e8f0; line-height: 1.7; margin: 0;">${escapeHtml(email)}</pre>
+        </div>`;
+}
+
+function analyzeKeywords() {
+    const text = document.getElementById('runKeywordText').value.trim();
+    const result = document.getElementById('keywordResult');
+    if (!text) { result.innerHTML = '<span style="color: #fc8181;">Paste some text first.</span>'; return; }
+
+    // Remove common stop words and count
+    const stopWords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','by','is','it','this','that','are','was','be','has','have','had','do','does','did','will','would','could','should','may','might','can','not','no','from','as','its','all','also','than','then','into','just','about','over','such','after','any','only','your','our','my','we','they','he','she','her','his','their','its','been','being','each','which','these','those','how','what','when','where','who','whom','why','so','if','up','out','very','own','same','some','new']);
+    const words = text.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
+    const freq = {};
+    words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+    const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20);
+    const maxCount = sorted[0]?.[1] || 1;
+
+    result.innerHTML = `
+        <div style="background: #1a1a2e; padding: 20px; border-radius: 10px;">
+            <div style="font-size: 12px; color: #718096; margin-bottom: 12px;">Total words: ${words.length} · Unique: ${Object.keys(freq).length} · Top 20 keywords:</div>
+            ${sorted.map(([word, count]) => {
+                const pct = (count / maxCount) * 100;
+                return `<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <div style="width: 100px; font-size: 13px; font-weight: 600; text-align: right;">${word}</div>
+                    <div style="flex: 1; background: #2d2d4e; border-radius: 4px; height: 18px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: ${pct}%; border-radius: 4px;"></div>
+                    </div>
+                    <div style="font-size: 12px; color: #a0aec0; width: 30px;">${count}</div>
+                </div>`;
+            }).join('')}
+        </div>`;
 }
 
 // ============================================================
