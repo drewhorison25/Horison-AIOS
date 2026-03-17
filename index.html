@@ -1437,7 +1437,7 @@
                 <div class="setting-item" style="flex-direction: column; align-items: stretch; gap: 12px;">
                     <div>
                         <div class="setting-label">Claude API Key</div>
-                        <div class="setting-description">Enter your Anthropic API key to enable the AI Assistant. The key is stored only in your browser session — it is never saved to the database or source code. It will be cleared when you close the browser.</div>
+                        <div class="setting-description">Enter your Anthropic API key to enable the AI Assistant for <strong>all users</strong>. The key is stored securely in your Supabase database. Only admins can set or remove it.</div>
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <input type="password" class="form-control" id="claudeApiKeyInput" placeholder="sk-ant-..." style="flex: 1; font-size: 13px; font-family: monospace;">
@@ -2569,13 +2569,35 @@ function getBrowserInfo() {
 }
 
 // ============================================================
-// CLAUDE API KEY MANAGEMENT (stored in sessionStorage only)
+// CLAUDE API KEY MANAGEMENT (stored in Supabase — admin sets, all users read)
 // ============================================================
-function getClaudeApiKey() {
-    return sessionStorage.getItem('aios_claude_api_key') || '';
+let _cachedApiKey = null;
+
+async function getClaudeApiKey() {
+    if (_cachedApiKey) return _cachedApiKey;
+
+    try {
+        const { data } = await sb.from('app_settings')
+            .select('value')
+            .eq('key', 'claude_api_key')
+            .single();
+
+        if (data && data.value) {
+            _cachedApiKey = data.value;
+            return data.value;
+        }
+    } catch (e) {
+        console.warn('Could not fetch API key:', e);
+    }
+    return '';
 }
 
-function saveClaudeApiKey() {
+async function saveClaudeApiKey() {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) {
+        showToast('Only admins can set the API key', 'error');
+        return;
+    }
+
     const input = document.getElementById('claudeApiKeyInput');
     const key = input.value.trim();
     if (!key) {
@@ -2586,26 +2608,45 @@ function saveClaudeApiKey() {
         showToast('Invalid key format. Anthropic keys start with sk-ant-', 'error');
         return;
     }
-    sessionStorage.setItem('aios_claude_api_key', key);
+
+    const { error } = await sb.from('app_settings').upsert({
+        key: 'claude_api_key',
+        value: key,
+        updated_by: currentProfile?.email || 'unknown',
+        updated_at: new Date().toISOString()
+    });
+
+    if (error) {
+        showToast('Failed to save: ' + error.message, 'error');
+        return;
+    }
+
+    _cachedApiKey = key;
     input.value = '';
     updateApiKeyStatus();
-    showToast('API key saved to this browser session', 'success');
+    showToast('API key saved! All users can now use the AI Assistant.', 'success');
 }
 
-function clearClaudeApiKey() {
-    sessionStorage.removeItem('aios_claude_api_key');
+async function clearClaudeApiKey() {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) {
+        showToast('Only admins can remove the API key', 'error');
+        return;
+    }
+
+    await sb.from('app_settings').delete().eq('key', 'claude_api_key');
+    _cachedApiKey = null;
     document.getElementById('claudeApiKeyInput').value = '';
     updateApiKeyStatus();
-    showToast('API key removed', 'info');
+    showToast('API key removed. AI Assistant is now disabled for all users.', 'info');
 }
 
-function updateApiKeyStatus() {
+async function updateApiKeyStatus() {
     const status = document.getElementById('apiKeyStatus');
     if (!status) return;
-    const key = getClaudeApiKey();
+    const key = await getClaudeApiKey();
     if (key) {
         const masked = key.substring(0, 10) + '...' + key.substring(key.length - 4);
-        status.innerHTML = `<span style="color: #48bb78;">✓ Key active:</span> <code style="background:#2d2d4e;padding:2px 6px;border-radius:4px;font-size:11px;">${masked}</code> <span style="color:#4a5568;">(session only — clears on browser close)</span>`;
+        status.innerHTML = `<span style="color: #48bb78;">✓ Key active for all users:</span> <code style="background:#2d2d4e;padding:2px 6px;border-radius:4px;font-size:11px;">${masked}</code>`;
     } else {
         status.innerHTML = '<span style="color: #ed8936;">No API key configured.</span> Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: #667eea;">console.anthropic.com</a>';
     }
@@ -2628,8 +2669,9 @@ async function sendAiMessage() {
     if (!msg) return;
 
     // Check if API key is configured
-    if (!getClaudeApiKey()) {
-        showToast('Claude API key not configured. Go to Settings to add your key.', 'error');
+    const apiKey = await getClaudeApiKey();
+    if (!apiKey) {
+        showToast('Claude API key not configured. Ask your admin to set it in Settings.', 'error');
         return;
     }
 
@@ -2669,7 +2711,7 @@ async function sendAiMessage() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': getClaudeApiKey(),
+                'x-api-key': apiKey,
                 'anthropic-dangerous-direct-browser-access': 'true',
             },
             body: JSON.stringify({
@@ -2989,7 +3031,7 @@ async function approveToolRequest(id) {
 }
 
 async function autoBuildTool(tool) {
-    const apiKey = getClaudeApiKey();
+    const apiKey = await getClaudeApiKey();
 
     if (!apiKey) {
         tool.dev_status = 'spec';
