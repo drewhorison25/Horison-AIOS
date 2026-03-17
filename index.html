@@ -1115,7 +1115,7 @@
                     <p style="color: #718096; margin-bottom: 20px;">Upload and manage files in your Supabase cloud storage bucket.</p>
 
                     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                        <div class="upload-zone-icon" style="font-size: 36px; color: #667eea;">⬆</div>
+                        <div style="font-size: 14px; color: #667eea; font-weight: 600; margin-bottom: 8px;">Upload Files</div>
                         <div class="upload-zone-text">
                             <strong>Click to upload</strong> or drag and drop files here<br>
                             <span style="font-size: 12px; color: #4a5568;">Max 50MB per file. All file types accepted.</span>
@@ -2006,7 +2006,7 @@ async function loadDocuments() {
     list.innerHTML = data.map(doc => `
         <div class="file-item">
             <div class="file-info">
-                <div class="file-icon">📄</div>
+                <div></div>
                 <div>
                     <div class="file-name">${escapeHtml(doc.title)}</div>
                     <div class="file-meta"><span class="badge badge-blue">${doc.category}</span> · Added ${timeAgo(doc.created_at)}</div>
@@ -2078,7 +2078,7 @@ async function loadTemplates() {
     list.innerHTML = data.map(tpl => `
         <div class="file-item">
             <div class="file-info">
-                <div class="file-icon">📋</div>
+                <div></div>
                 <div>
                     <div class="file-name">${escapeHtml(tpl.name)}</div>
                     <div class="file-meta"><span class="badge badge-green">${tpl.category}</span> · Added ${timeAgo(tpl.created_at)}</div>
@@ -2573,8 +2573,8 @@ function formatBytes(bytes) {
 }
 
 function getFileIcon(ext) {
-    const icons = { pdf: '📕', doc: '📘', docx: '📘', xls: '📗', xlsx: '📗', csv: '📗', png: '🖼', jpg: '🖼', jpeg: '🖼', gif: '🖼', svg: '🖼', mp4: '🎬', mp3: '🎵', zip: '📦', rar: '📦', js: '📜', html: '🌐', css: '🎨', json: '📋', txt: '📝' };
-    return icons[ext] || '📄';
+    const icons = { pdf: 'PDF', doc: 'DOC', docx: 'DOC', xls: 'XLS', xlsx: 'XLS', csv: 'CSV', png: 'IMG', jpg: 'IMG', jpeg: 'IMG', gif: 'IMG', svg: 'SVG', mp4: 'VID', mp3: 'AUD', zip: 'ZIP', rar: 'ZIP', js: 'JS', html: 'HTM', css: 'CSS', json: 'JSN', txt: 'TXT' };
+    return icons[ext] || 'FILE';
 }
 
 function getDeviceInfo() {
@@ -2895,7 +2895,7 @@ function renderAutomations() {
         return;
     }
 
-    const typeIcons = { 'notification': '📧', 'data-pull': '📡', 'task-trigger': '🔄', 'report': '📊', 'custom': '⚡' };
+    const typeIcons = { 'notification': 'N', 'data-pull': 'D', 'task-trigger': 'T', 'report': 'R', 'custom': 'C' };
     const typeLabels = { 'notification': 'Notification', 'data-pull': 'Data Pull', 'task-trigger': 'Task Trigger', 'report': 'Report', 'custom': 'Custom' };
 
     list.innerHTML = automations.map(a => `
@@ -2903,7 +2903,7 @@ function renderAutomations() {
             <div style="display: flex; justify-content: space-between; align-items: start;">
                 <div style="flex: 1;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                        <span style="font-size: 20px;">${typeIcons[a.type] || '⚡'}</span>
+                        <div></div>
                         <div>
                             <div style="font-weight: 600;">${escapeHtml(a.name)}</div>
                             <div style="font-size: 12px; color: #718096;">
@@ -3020,7 +3020,7 @@ function renderAutomationLog() {
         <div style="background: #0f0f1a; padding: 14px 16px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px; border-left: 3px solid ${log.status === 'success' ? '#48bb78' : '#fc8181'};">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px;">${log.status === 'success' ? '✅' : '❌'}</span>
+                    <span style="font-size: 14px;">${log.status === 'success' ? '[OK]' : '[ERR]'}</span>
                     <span style="font-weight: 600; font-size: 13px;">${escapeHtml(log.automation_name)}</span>
                     <span class="badge ${log.status === 'success' ? 'badge-green' : 'badge-red'}" style="font-size: 9px;">${log.status}</span>
                 </div>
@@ -3056,7 +3056,7 @@ let toolLibrary = [
         id: 'asin-lookup',
         name: 'ASIN Lookup Tool',
         description: 'Look up Amazon product details by ASIN',
-        icon: '🔍',
+        icon: 'A',
         dept: 'PPC',
         type: 'runnable',
         runner: 'asinLookup'
@@ -3065,7 +3065,7 @@ let toolLibrary = [
         id: 'acos-calc',
         name: 'ACoS Calculator',
         description: 'Calculate Advertising Cost of Sales from spend and revenue',
-        icon: '📊',
+        icon: 'AC',
         dept: 'PPC',
         type: 'runnable',
         runner: 'acosCalculator'
@@ -3074,7 +3074,7 @@ let toolLibrary = [
         id: 'email-gen',
         name: 'Client Email Generator',
         description: 'Generate professional client emails from templates',
-        icon: '✉️',
+        icon: 'E',
         dept: 'Account',
         type: 'runnable',
         runner: 'emailGenerator'
@@ -3083,7 +3083,7 @@ let toolLibrary = [
         id: 'keyword-tool',
         name: 'Keyword Density Analyzer',
         description: 'Analyze keyword frequency in listing copy',
-        icon: '🔤',
+        icon: 'K',
         dept: 'PPC',
         type: 'runnable',
         runner: 'keywordAnalyzer'
@@ -3164,7 +3164,7 @@ function renderToolRequests() {
     list.innerHTML = toolRequests.map(t => `
         <div class="file-item">
             <div class="file-info">
-                <div class="file-icon" style="font-size: 20px;">🔧</div>
+                <div></div>
                 <div>
                     <div class="file-name">${escapeHtml(t.name)}</div>
                     <div class="file-meta">
@@ -3288,7 +3288,7 @@ Rules:
             id: 'auto-' + tool.id,
             name: tool.name,
             description: tool.description || 'AI-generated tool',
-            icon: toolSpec.icon || '🤖',
+            icon: toolSpec.icon || 'AI',
             dept: tool.dept,
             type: 'runnable',
             runner: 'auto-' + tool.id,
@@ -3326,7 +3326,7 @@ async function retryBuildTool(id) {
 const devStages = ['spec', 'development', 'testing', 'live'];
 const devStageLabels = { spec: 'Spec / Planning', development: 'In Development', testing: 'Testing / QA', live: 'Live' };
 const devStageColors = { spec: 'badge-yellow', development: 'badge-blue', testing: 'badge-green', live: 'badge-green' };
-const devStageIcons = { spec: '📋', development: '💻', testing: '🧪', live: '🚀' };
+const devStageIcons = { spec: '[S]', development: '[D]', testing: '[T]', live: '[L]' };
 
 function renderDevQueue() {
     const list = document.getElementById('devQueueList');
@@ -3368,18 +3368,18 @@ function renderDevQueue() {
 
                 ${t.build_status_msg ? `
                     <div style="font-size: 12px; color: ${t.build_error ? '#fc8181' : '#48bb78'}; margin-bottom: 10px; padding: 8px 12px; background: ${t.build_error ? 'rgba(252,129,129,0.08)' : 'rgba(72,187,120,0.08)'}; border-radius: 6px;">
-                        ${t.build_error ? '⚠️' : '✓'} ${escapeHtml(t.build_status_msg)}
+                        ${t.build_error ? '[!]' : '[OK]'} ${escapeHtml(t.build_status_msg)}
                     </div>
                 ` : ''}
 
                 ${RBAC.isSuperuserOrAdmin(currentProfile) ? `
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         ${t.build_error ? `
-                            <button class="btn btn-sm btn-primary" onclick="retryBuildTool(${t.id})">🔄 Rebuild with Claude</button>
+                            <button class="btn btn-sm btn-primary" onclick="retryBuildTool(${t.id})">Rebuild with Claude</button>
                         ` : t.dev_status !== 'live' && t.dev_status !== 'published' ? `
                             <button class="btn btn-sm btn-primary" onclick="advanceDevStage(${t.id})">Advance to Next Stage →</button>
                         ` : t.dev_status === 'live' ? `
-                            <button class="btn btn-sm btn-primary" onclick="publishToLibrary(${t.id})">🚀 Publish to Library</button>
+                            <button class="btn btn-sm btn-primary" onclick="publishToLibrary(${t.id})">Publish to Library</button>
                         ` : ''}
                         ${t.dev_status !== 'published' ? `<button class="btn btn-sm btn-secondary" onclick="regressDevStage(${t.id})">← Previous Stage</button>` : ''}
                     </div>
@@ -3419,7 +3419,7 @@ function publishToLibrary(id) {
         id: 'custom-' + t.id,
         name: t.name,
         description: t.description || 'Custom tool',
-        icon: '🔧',
+        icon: 'T',
         dept: t.dept,
         type: 'info',
         runner: null
@@ -3447,8 +3447,7 @@ function renderToolLibrary() {
             <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e; transition: all 0.2s; cursor: pointer;" 
                  onmouseenter="this.style.borderColor='#667eea'" onmouseleave="this.style.borderColor='#2d2d4e'"
                  onclick="runTool('${escapeHtml(t.runner || '')}', '${escapeHtml(t.name)}')">
-                <div style="font-size: 28px; margin-bottom: 12px;">${t.icon}</div>
-                <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(t.name)}</div>
+                <div style="font-size: 13px; font-weight: 600; color: #667eea; margin-bottom: 12px;">${escapeHtml(t.name)}</div>
                 <div style="font-size: 12px; color: #718096; margin-bottom: 12px;">${escapeHtml(t.description)}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span class="badge badge-blue" style="font-size: 10px;">${t.dept}</span>
@@ -3575,7 +3574,7 @@ function calcAcos() {
             </div>
         </div>
         <div style="margin-top: 12px; font-size: 13px; color: #a0aec0;">
-            ${acos <= 25 ? '✅ Excellent ACoS — campaign is very profitable.' : acos <= 40 ? '⚠️ Moderate ACoS — consider optimizing keywords.' : '🔴 High ACoS — review targeting and bids.'}
+            ${acos <= 25 ? 'Excellent ACoS — campaign is very profitable.' : acos <= 40 ? 'Moderate ACoS — consider optimizing keywords.' : 'High ACoS — review targeting and bids.'}
         </div>`;
 }
 
