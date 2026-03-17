@@ -1944,6 +1944,7 @@ async function loadAllData() {
         loadTemplates(),
         loadStorageFiles(),
         loadTeam(),
+        loadToolRequests(),
     ]);
     updateStats();
 }
@@ -2434,7 +2435,7 @@ function showPage(pageId) {
     if (pageId === 'documents') loadDocuments();
     if (pageId === 'templates') loadTemplates();
     if (pageId === 'automations') renderAutomations();
-    if (pageId === 'tools') { renderToolRequests(); renderToolLibrary(); }
+    if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); }
 }
 
 function toggleForms() {
@@ -2955,7 +2956,7 @@ function openRequestTool() {
     document.getElementById('requestToolCard').style.display = 'block';
 }
 
-function submitToolRequest() {
+async function submitToolRequest() {
     const name = document.getElementById('toolName').value.trim();
     const description = document.getElementById('toolDescription').value.trim();
     const priority = document.getElementById('toolPriority').value;
@@ -2963,20 +2964,31 @@ function submitToolRequest() {
 
     if (!name) { showToast('Please enter a tool name', 'error'); return; }
 
-    toolRequests.push({
-        id: Date.now(),
+    const { error } = await sb.from('tool_requests').insert({
         name, description, priority, dept,
         status: 'pending',
         dev_status: null,
         requested_by: currentProfile?.name || 'Unknown',
+        requested_by_email: currentUser?.email || '',
+        user_id: currentUser?.id,
         created_at: new Date().toISOString()
     });
+
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
 
     document.getElementById('requestToolCard').style.display = 'none';
     document.getElementById('toolName').value = '';
     document.getElementById('toolDescription').value = '';
-    renderToolRequests();
+    await loadToolRequests();
     showToast('Tool request submitted!', 'success');
+}
+
+async function loadToolRequests() {
+    const { data } = await sb.from('tool_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+    toolRequests = data || [];
+    renderToolRequests();
 }
 
 function renderToolRequests() {
@@ -3003,8 +3015,8 @@ function renderToolRequests() {
             </div>
             <div class="file-actions">
                 ${RBAC.isSuperuserOrAdmin(currentProfile) && t.status === 'pending' ? `
-                    <button class="btn btn-sm btn-primary" onclick="approveToolRequest(${t.id})">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectToolRequest(${t.id})">Reject</button>
+                    <button class="btn btn-sm btn-primary" onclick="approveToolRequest('${t.id}')">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectToolRequest('${t.id}')">Reject</button>
                 ` : ''}
                 ${t.status === 'approved' && !t.dev_status ? `
                     <span class="badge badge-green" style="font-size: 10px;">Ready for Dev</span>
@@ -3019,15 +3031,30 @@ async function approveToolRequest(id) {
     const t = toolRequests.find(x => x.id === id);
     if (!t) return;
 
+    await sb.from('tool_requests').update({
+        status: 'approved',
+        dev_status: 'development',
+        approved_by: currentProfile?.name,
+        approved_at: new Date().toISOString()
+    }).eq('id', id);
+
     t.status = 'approved';
     t.dev_status = 'development';
     t.approved_by = currentProfile?.name;
-    t.approved_at = new Date().toISOString();
     renderToolRequests();
     showToast('Tool approved! Claude is building it...', 'success');
 
     // Auto-build with Claude
     await autoBuildTool(t);
+}
+
+async function rejectToolRequest(id) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can reject tools', 'error'); return; }
+    await sb.from('tool_requests').update({ status: 'rejected' }).eq('id', id);
+    const t = toolRequests.find(x => x.id === id);
+    if (t) t.status = 'rejected';
+    renderToolRequests();
+    showToast('Tool request rejected', 'info');
 }
 
 async function autoBuildTool(tool) {
@@ -3122,12 +3149,6 @@ Rules:
         renderDevQueue();
         showToast('Auto-build failed: ' + err.message + '. Tool moved to Dev Queue.', 'error');
     }
-}
-
-function rejectToolRequest(id) {
-    if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can reject tools', 'error'); return; }
-    const t = toolRequests.find(x => x.id === id);
-    if (t) { t.status = 'rejected'; renderToolRequests(); showToast('Tool request rejected', 'info'); }
 }
 
 async function retryBuildTool(id) {
