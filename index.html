@@ -768,11 +768,6 @@
 <!-- APP CONTAINER -->
 <div class="app-container" id="appContainer">
     <!-- Status Indicator -->
-    <div class="status-indicator">
-        <div class="status-dot"></div>
-        <span>System Online</span>
-    </div>
-
     <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-logo">
@@ -814,6 +809,10 @@
         <div class="topbar">
             <div class="page-title" id="pageTitle">Dashboard</div>
             <div class="topbar-actions">
+                <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border-radius: 8px; font-size: 11px; color: #a0aec0; margin-right: 4px;">
+                    <div style="width: 6px; height: 6px; border-radius: 50%; background: #48bb78; animation: pulse 2s infinite;"></div>
+                    System Online
+                </div>
                 <div class="user-menu" onclick="toggleMenu()">
                     <div class="user-avatar" id="userAvatar">?</div>
                     <div class="user-info">
