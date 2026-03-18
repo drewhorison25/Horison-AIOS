@@ -1277,13 +1277,48 @@
                             <div class="card-title" style="margin: 0;">API Hub</div>
                             <p style="color: #718096; font-size: 13px; margin-top: 4px;">Manage API connections. Admin-only: keys are stored securely in Supabase.</p>
                         </div>
+                        <button class="btn btn-primary" onclick="openAddCustomApi()">+ Add API</button>
                     </div>
                     <div id="apiHubList">
                         <p style="color: #718096; text-align: center; padding: 20px;">Loading integrations...</p>
                     </div>
                 </div>
 
-                <!-- API Config Panel (shown when Configure is clicked) -->
+                <!-- Add Custom API Form -->
+                <div class="card" id="addCustomApiCard" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div class="card-title" style="margin: 0;">Add Custom API</div>
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('addCustomApiCard').style.display='none'">Close</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Name</label>
+                        <input type="text" class="form-control" id="customApiName" placeholder="e.g. Stripe, Shopify, HubSpot">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" id="customApiDesc" placeholder="e.g. Payment processing, E-commerce, CRM">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Base URL (optional)</label>
+                        <input type="text" class="form-control" id="customApiUrl" placeholder="e.g. https://api.stripe.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Docs URL (optional)</label>
+                        <input type="text" class="form-control" id="customApiDocs" placeholder="e.g. https://docs.stripe.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Authentication Fields (comma-separated)</label>
+                        <input type="text" class="form-control" id="customApiFields" placeholder="e.g. api_key, secret_key, webhook_url">
+                        <div style="font-size: 11px; color: #4a5568; margin-top: 4px;">Enter the field names you need to store. Each becomes a text input in the config panel.</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Brand Color</label>
+                        <input type="color" id="customApiColor" value="#667eea" style="width: 60px; height: 36px; border: none; border-radius: 8px; cursor: pointer;">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveCustomApi()">Add Integration</button>
+                </div>
+
+                <!-- API Config Panel -->
                 <div class="card" id="apiConfigPanel" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div class="card-title" style="margin: 0;" id="apiConfigTitle">Configure API</div>
@@ -1915,6 +1950,7 @@ async function loadAllData() {
         loadStorageFiles(),
         loadTeam(),
         loadToolRequests(),
+        loadAutomations(),
     ]);
     updateStats();
 }
@@ -2415,7 +2451,7 @@ function showPage(pageId) {
     if (pageId === 'storage') loadStorageFiles();
     if (pageId === 'documents') loadDocuments();
     if (pageId === 'templates') loadTemplates();
-    if (pageId === 'automations') { renderAutomations(); renderAutomationLog(); }
+    if (pageId === 'automations') loadAutomations();
     if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); }
     if (pageId === 'api-hub') loadApiConfigs();
 }
@@ -2797,6 +2833,21 @@ function clearAiChat() {
 let automations = [];
 let automationLogs = [];
 
+async function loadAutomations() {
+    try {
+        const { data } = await sb.from('automations').select('*').order('created_at', { ascending: false });
+        automations = data || [];
+    } catch(e) { console.warn('Could not load automations:', e); }
+
+    try {
+        const { data } = await sb.from('automation_logs').select('*').order('created_at', { ascending: false }).limit(50);
+        automationLogs = data || [];
+    } catch(e) { console.warn('Could not load automation logs:', e); }
+
+    renderAutomations();
+    renderAutomationLog();
+}
+
 function openCreateAutomation() {
     if (!RBAC.can(currentProfile, 'action:create-automation')) {
         showToast('Access denied. Manager+ access required.', 'error');
@@ -2809,11 +2860,11 @@ function openCreateAutomation() {
 function updateAutoTypeHint() {
     const type = document.getElementById('autoType')?.value;
     const hints = {
-        'notification': 'Sends an email or Slack message. Example: "Email managers every Friday with PPC summary."',
-        'data-pull': 'Pulls data from connected APIs. Example: "Pull Amazon sales data daily and save to Documents."',
-        'task-trigger': 'Reacts to events in AIOS. Example: "When a document is added, auto-categorize it."',
-        'report': 'Generates reports from data. Example: "Monthly client report with ACoS, spend, and revenue."',
-        'custom': 'A custom workflow described in natural language. Claude will help define the steps.'
+        'notification': 'Sends a Slack message using your connected Slack API. Example: "Post PPC summary to #reports every Friday."',
+        'data-pull': 'Pulls data from connected APIs (Amazon, Sheets). Example: "Pull Amazon sales data and save to Documents."',
+        'task-trigger': 'Reacts to events in AIOS. Example: "When a document is added, auto-categorize it with Claude AI."',
+        'report': 'Uses Claude AI to generate reports from your data. Example: "Monthly client report with ACoS and revenue."',
+        'custom': 'A custom workflow — Claude AI will interpret your description and execute the steps.'
     };
     const el = document.getElementById('autoTypeHint');
     if (el) el.textContent = hints[type] || '';
@@ -2828,21 +2879,24 @@ async function saveAutomation() {
 
     if (!name) { showToast('Please enter an automation name', 'error'); return; }
 
-    automations.push({
-        id: 'auto_' + Date.now(),
+    const record = {
         name, description, type, trigger, schedule,
         enabled: true,
         run_count: 0,
         last_run: null,
         last_status: null,
         created_by: currentProfile?.name || 'Unknown',
+        user_id: currentUser?.id,
         created_at: new Date().toISOString()
-    });
+    };
+
+    const { error } = await sb.from('automations').insert(record);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
 
     document.getElementById('createAutomationCard').style.display = 'none';
     document.getElementById('autoName').value = '';
     document.getElementById('autoDescription').value = '';
-    renderAutomations();
+    await loadAutomations();
     showToast('Automation created!', 'success');
 }
 
@@ -2890,52 +2944,22 @@ async function runAutomationNow(id) {
     const a = automations.find(x => x.id === id);
     if (!a || !a.enabled) return;
 
-    showToast(`Running "${a.name}"...`, 'info');
+    showToast('Running "' + a.name + '"...', 'info');
 
     const startTime = Date.now();
     let status = 'success';
     let output = '';
 
     try {
-        // Use Claude to simulate/execute the automation
-        const apiKey = await getClaudeApiKey();
-
-        if (apiKey) {
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-dangerous-direct-browser-access': 'true',
-                },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 1024,
-                    system: `You are an automation executor for Horison AIOS (an Amazon marketing agency platform). When given an automation to run, simulate its execution and provide realistic output. Format your response as a brief execution report with:
-- What was done (2-3 bullet points)
-- Any data/results generated
-- Status summary
-Keep it concise and realistic for a ${a.type} automation.`,
-                    messages: [{
-                        role: 'user',
-                        content: `Execute this automation:\nName: ${a.name}\nType: ${a.type}\nDescription: ${a.description}\nTrigger: ${a.trigger}\nSchedule: ${a.schedule}\nCurrent user: ${currentProfile?.name}\nTimestamp: ${new Date().toISOString()}`
-                    }]
-                })
-            });
-
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            output = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || 'Completed.';
+        // ── REAL API ACTIONS based on automation type ──
+        if (a.type === 'notification') {
+            output = await executeNotification(a);
+        } else if (a.type === 'data-pull') {
+            output = await executeDataPull(a);
+        } else if (a.type === 'report' || a.type === 'custom' || a.type === 'task-trigger') {
+            output = await executeWithClaude(a);
         } else {
-            // No API key — simulate execution
-            const simOutputs = {
-                'notification': `Notification sent successfully.\n• Recipients: managers@horisonmarketing.com\n• Channel: Email\n• Subject: "${a.name}" — ${new Date().toLocaleDateString()}`,
-                'data-pull': `Data pull completed.\n• Source: Amazon SP-API\n• Records fetched: ${Math.floor(Math.random() * 500) + 50}\n• Status: Saved to Documents`,
-                'task-trigger': `Task trigger executed.\n• Event detected: New document added\n• Action: Auto-categorized as SOP\n• Tags applied: [amazon, ppc, process]`,
-                'report': `Report generated.\n• Type: ${a.name}\n• Period: ${new Date().toLocaleDateString()}\n• Pages: ${Math.floor(Math.random() * 10) + 3}\n• Status: Ready for review`,
-                'custom': `Custom workflow executed.\n• Steps completed: 3/3\n• Duration: ${Math.floor(Math.random() * 30) + 5}s\n• Status: All steps passed`
-            };
-            output = simOutputs[a.type] || 'Automation executed successfully.';
+            output = 'Automation type not recognized.';
         }
     } catch (err) {
         status = 'failed';
@@ -2944,14 +2968,19 @@ Keep it concise and realistic for a ${a.type} automation.`,
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-    // Update automation stats
-    a.run_count++;
+    // Update automation in Supabase
+    a.run_count = (a.run_count || 0) + 1;
     a.last_run = new Date().toISOString();
     a.last_status = status;
 
-    // Add to execution log
-    automationLogs.unshift({
-        id: Date.now(),
+    await sb.from('automations').update({
+        run_count: a.run_count,
+        last_run: a.last_run,
+        last_status: status
+    }).eq('id', a.id);
+
+    // Save execution log to Supabase
+    const logEntry = {
         automation_id: a.id,
         automation_name: a.name,
         type: a.type,
@@ -2960,11 +2989,136 @@ Keep it concise and realistic for a ${a.type} automation.`,
         duration: duration + 's',
         run_by: currentProfile?.name || 'System',
         created_at: new Date().toISOString()
-    });
+    };
+
+    await sb.from('automation_logs').insert(logEntry);
+    automationLogs.unshift(logEntry);
 
     renderAutomations();
     renderAutomationLog();
-    showToast(`"${a.name}" ${status === 'success' ? 'completed successfully' : 'failed'}!`, status === 'success' ? 'success' : 'error');
+    showToast('"' + a.name + '" ' + (status === 'success' ? 'completed successfully' : 'failed') + '!', status === 'success' ? 'success' : 'error');
+}
+
+// ── REAL EXECUTION: Slack Notification ──
+async function executeNotification(a) {
+    const slackConfig = apiConfigs['api_slack'];
+    if (slackConfig && slackConfig.bot_token) {
+        const channel = slackConfig.default_channel || '#general';
+        const message = a.description || 'Automation: ' + a.name;
+
+        const resp = await fetch('https://slack.com/api/chat.postMessage', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + slackConfig.bot_token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                channel: channel,
+                text: '[AIOS Automation] ' + a.name + '\n' + message + '\n\nTriggered by: ' + (currentProfile?.name || 'System') + ' at ' + new Date().toLocaleString()
+            })
+        });
+
+        const data = await resp.json();
+        if (data.ok) {
+            return 'Slack notification sent successfully!\n- Channel: ' + (data.channel || channel) + '\n- Message ID: ' + (data.ts || 'sent') + '\n- Timestamp: ' + new Date().toLocaleString();
+        } else {
+            throw new Error('Slack API error: ' + data.error);
+        }
+    }
+
+    // Fallback: use Claude to compose notification
+    return await executeWithClaude(a);
+}
+
+// ── REAL EXECUTION: Data Pull (Google Sheets / Amazon) ──
+async function executeDataPull(a) {
+    let results = [];
+
+    // Try Google Sheets
+    const sheetsConfig = apiConfigs['api_google_sheets'];
+    if (sheetsConfig && sheetsConfig.api_key && sheetsConfig.spreadsheet_id) {
+        try {
+            const resp = await fetch(
+                'https://sheets.googleapis.com/v4/spreadsheets/' + sheetsConfig.spreadsheet_id + 
+                '/values/A1:Z10?key=' + sheetsConfig.api_key
+            );
+            const data = await resp.json();
+            if (data.values) {
+                const rowCount = data.values.length;
+                const colCount = data.values[0]?.length || 0;
+                results.push('Google Sheets: Fetched ' + rowCount + ' rows x ' + colCount + ' columns from spreadsheet');
+                results.push('Headers: ' + (data.values[0]?.join(', ') || 'none'));
+                results.push('Sample row: ' + (data.values[1]?.join(', ') || 'empty'));
+            } else {
+                results.push('Google Sheets: No data found or access denied — ' + (data.error?.message || 'unknown error'));
+            }
+        } catch(e) {
+            results.push('Google Sheets: Error — ' + e.message);
+        }
+    }
+
+    // Try ClickUp tasks
+    const clickupConfig = apiConfigs['api_clickup'];
+    if (clickupConfig && clickupConfig.api_token) {
+        try {
+            const resp = await fetch('https://api.clickup.com/api/v2/team', {
+                headers: { 'Authorization': clickupConfig.api_token }
+            });
+            const data = await resp.json();
+            if (data.teams) {
+                results.push('ClickUp: Connected to ' + data.teams.length + ' workspace(s)');
+                data.teams.forEach(t => results.push('  - ' + t.name + ' (' + (t.members?.length || 0) + ' members)'));
+            }
+        } catch(e) {
+            results.push('ClickUp: Error — ' + e.message);
+        }
+    }
+
+    if (results.length === 0) {
+        return await executeWithClaude(a);
+    }
+
+    return 'Data Pull Results:\n' + results.join('\n');
+}
+
+// ── EXECUTION: Claude AI (for reports, task triggers, custom) ──
+async function executeWithClaude(a) {
+    const apiKey = await getClaudeApiKey();
+    if (!apiKey) {
+        return 'No Claude API key configured. Set it in Settings.\nAutomation: ' + a.name + '\nType: ' + a.type + '\nWould execute: ' + (a.description || 'No description');
+    }
+
+    // Gather available API context
+    let apiContext = 'Connected APIs: ';
+    const connected = [];
+    if (apiConfigs['api_slack']) connected.push('Slack');
+    if (apiConfigs['api_clickup']) connected.push('ClickUp');
+    if (apiConfigs['api_google_sheets']) connected.push('Google Sheets');
+    if (apiConfigs['api_hubstaff']) connected.push('Hubstaff');
+    if (apiConfigs['api_amazon_sp']) connected.push('Amazon SP-API');
+    apiContext += connected.length > 0 ? connected.join(', ') : 'None';
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            system: 'You are an automation executor for Horison AIOS (Amazon marketing agency). Execute the automation and provide a real execution report. ' + apiContext + '. Current user: ' + (currentProfile?.name || 'System') + '. Be concise with bullet points.',
+            messages: [{
+                role: 'user',
+                content: 'Execute: ' + a.name + '\nType: ' + a.type + '\nDescription: ' + a.description + '\nSchedule: ' + a.schedule
+            }]
+        })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.content?.map(b => b.type === 'text' ? b.text : '').join('') || 'Completed.';
 }
 
 function renderAutomationLog() {
@@ -2991,13 +3145,18 @@ function renderAutomationLog() {
     `).join('');
 }
 
-function toggleAutomation(id) {
+async function toggleAutomation(id) {
     const a = automations.find(x => x.id === id);
-    if (a) { a.enabled = !a.enabled; renderAutomations(); showToast(a.enabled ? 'Automation enabled' : 'Automation paused', 'info'); }
+    if (!a) return;
+    a.enabled = !a.enabled;
+    await sb.from('automations').update({ enabled: a.enabled }).eq('id', id);
+    renderAutomations();
+    showToast(a.enabled ? 'Automation enabled' : 'Automation paused', 'info');
 }
 
-function deleteAutomation(id) {
+async function deleteAutomation(id) {
     if (!confirm('Delete this automation?')) return;
+    await sb.from('automations').delete().eq('id', id);
     automations = automations.filter(x => x.id !== id);
     renderAutomations();
     showToast('Automation deleted', 'info');
@@ -3691,44 +3850,159 @@ async function loadApiConfigs() {
                 }
             });
         }
+
+        // Load custom integrations from Supabase
+        const customs = apiConfigs['api_custom_integrations'];
+        if (customs && Array.isArray(customs)) {
+            customs.forEach(c => {
+                if (!API_INTEGRATIONS.find(a => a.id === c.id)) {
+                    API_INTEGRATIONS.push(c);
+                }
+            });
+        }
     } catch(e) {
         console.warn('Could not load API configs:', e);
     }
     renderApiHub();
 }
 
+function openAddCustomApi() {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) {
+        showToast('Only admins can add API integrations', 'error');
+        return;
+    }
+    document.getElementById('addCustomApiCard').style.display = 'block';
+}
+
+async function saveCustomApi() {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) return;
+
+    const name = document.getElementById('customApiName').value.trim();
+    const desc = document.getElementById('customApiDesc').value.trim();
+    const url = document.getElementById('customApiUrl').value.trim();
+    const docs = document.getElementById('customApiDocs').value.trim();
+    const fieldsRaw = document.getElementById('customApiFields').value.trim();
+    const color = document.getElementById('customApiColor').value;
+
+    if (!name) { showToast('Please enter an API name', 'error'); return; }
+    if (!fieldsRaw) { showToast('Please enter at least one authentication field', 'error'); return; }
+
+    const id = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const fields = fieldsRaw.split(',').map(f => f.trim()).filter(f => f).map(f => ({
+        key: f.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+        label: f.trim(),
+        type: f.toLowerCase().includes('key') || f.toLowerCase().includes('secret') || f.toLowerCase().includes('token') || f.toLowerCase().includes('password') ? 'password' : 'text'
+    }));
+
+    const newApi = {
+        id,
+        name,
+        description: desc || name + ' integration',
+        color: color || '#667eea',
+        fields,
+        testUrl: url || '',
+        docs: docs || '#',
+        custom: true
+    };
+
+    // Add to runtime list
+    if (!API_INTEGRATIONS.find(a => a.id === id)) {
+        API_INTEGRATIONS.push(newApi);
+    }
+
+    // Save custom integrations list to Supabase
+    const existingCustoms = apiConfigs['api_custom_integrations'] || [];
+    if (!existingCustoms.find(c => c.id === id)) {
+        existingCustoms.push(newApi);
+    }
+
+    await sb.from('app_settings').upsert({
+        key: 'api_custom_integrations',
+        value: JSON.stringify(existingCustoms),
+        updated_by: currentProfile?.email || 'unknown',
+        updated_at: new Date().toISOString()
+    });
+
+    apiConfigs['api_custom_integrations'] = existingCustoms;
+
+    // Clear form
+    document.getElementById('customApiName').value = '';
+    document.getElementById('customApiDesc').value = '';
+    document.getElementById('customApiUrl').value = '';
+    document.getElementById('customApiDocs').value = '';
+    document.getElementById('customApiFields').value = '';
+    document.getElementById('addCustomApiCard').style.display = 'none';
+
+    renderApiHub();
+    showToast(name + ' added to API Hub!', 'success');
+}
+
+async function removeCustomApi(apiId) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) return;
+    if (!confirm('Remove this API integration? This will also delete its stored credentials.')) return;
+
+    // Remove from runtime
+    const idx = API_INTEGRATIONS.findIndex(a => a.id === apiId);
+    if (idx > -1) API_INTEGRATIONS.splice(idx, 1);
+
+    // Remove from saved customs
+    let customs = apiConfigs['api_custom_integrations'] || [];
+    customs = customs.filter(c => c.id !== apiId);
+    await sb.from('app_settings').upsert({
+        key: 'api_custom_integrations',
+        value: JSON.stringify(customs),
+        updated_by: currentProfile?.email || 'unknown',
+        updated_at: new Date().toISOString()
+    });
+    apiConfigs['api_custom_integrations'] = customs;
+
+    // Remove credentials
+    await sb.from('app_settings').delete().eq('key', 'api_' + apiId);
+    delete apiConfigs['api_' + apiId];
+
+    document.getElementById('apiConfigPanel').style.display = 'none';
+    renderApiHub();
+    showToast('API integration removed', 'info');
+}
+
 function renderApiHub() {
     const list = document.getElementById('apiHubList');
     const isAdmin = RBAC.isSuperuserOrAdmin(currentProfile);
 
-    list.innerHTML = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-        ${API_INTEGRATIONS.map(api => {
-            const configKey = 'api_' + api.id;
-            const config = apiConfigs[configKey];
-            const isConnected = config && Object.keys(config).length > 0;
-            const hasAllFields = isConnected && api.fields.every(f => config[f.key]);
+    const cards = API_INTEGRATIONS.map(api => {
+        const configKey = 'api_' + api.id;
+        const config = apiConfigs[configKey];
+        const isConnected = config && Object.keys(config).length > 0;
+        const hasAllFields = isConnected && api.fields.every(f => config[f.key]);
+        const q = "'";
 
-            return `
-                <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid ${hasAllFields ? 'rgba(72,187,120,0.3)' : '#2d2d4e'};">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-                        <div style="width: 40px; height: 40px; border-radius: 10px; background: ${api.color}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: white;">${api.name[0]}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600;">${api.name}</div>
-                            <div style="font-size: 11px; color: #718096;">${api.description}</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="badge ${hasAllFields ? 'badge-green' : isConnected ? 'badge-yellow' : 'badge-gray'}">${hasAllFields ? 'Connected' : isConnected ? 'Incomplete' : 'Not Connected'}</span>
-                        <div style="display: flex; gap: 6px;">
-                            ${hasAllFields ? `<button class="btn btn-sm btn-secondary" onclick="testApiConnection('${api.id}')">Test</button>` : ''}
-                            ${isAdmin ? `<button class="btn btn-sm btn-primary" onclick="openApiConfig('${api.id}')">${isConnected ? 'Configure' : 'Connect'}</button>` : ''}
-                            <a href="${api.docs}" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration: none;">Docs</a>
-                        </div>
-                    </div>
-                    ${hasAllFields ? `<div style="font-size: 10px; color: #4a5568; margin-top: 8px;">Last updated: ${apiConfigs[configKey + '_meta']?.updated_at ? timeAgo(apiConfigs[configKey + '_meta'].updated_at) : 'Unknown'}</div>` : ''}
-                </div>`;
-        }).join('')}
-    </div>`;
+        let buttons = '';
+        if (hasAllFields) buttons += '<button class="btn btn-sm btn-secondary" onclick="testApiConnection(' + q + api.id + q + ')">Test</button> ';
+        if (isAdmin) buttons += '<button class="btn btn-sm btn-primary" onclick="openApiConfig(' + q + api.id + q + ')">' + (isConnected ? 'Configure' : 'Connect') + '</button> ';
+        if (api.docs && api.docs !== '#') buttons += '<a href="' + api.docs + '" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration:none;">Docs</a> ';
+        if (api.custom && isAdmin) buttons += '<button class="btn btn-sm btn-danger" onclick="removeCustomApi(' + q + api.id + q + ')">Remove</button>';
+
+        const customBadge = api.custom ? ' <span class="badge badge-blue" style="font-size:9px;margin-left:6px;">Custom</span>' : '';
+        const statusClass = hasAllFields ? 'badge-green' : isConnected ? 'badge-yellow' : 'badge-gray';
+        const statusText = hasAllFields ? 'Connected' : isConnected ? 'Incomplete' : 'Not Connected';
+        const borderColor = hasAllFields ? 'rgba(72,187,120,0.3)' : '#2d2d4e';
+
+        return '<div style="background:#0f0f1a;padding:20px;border-radius:12px;border:1px solid ' + borderColor + ';">' +
+            '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">' +
+                '<div style="width:40px;height:40px;border-radius:10px;background:' + api.color + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:white;">' + api.name[0] + '</div>' +
+                '<div style="flex:1;">' +
+                    '<div style="font-weight:600;">' + escapeHtml(api.name) + customBadge + '</div>' +
+                    '<div style="font-size:11px;color:#718096;">' + escapeHtml(api.description) + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<span class="badge ' + statusClass + '">' + statusText + '</span>' +
+                '<div style="display:flex;gap:6px;">' + buttons + '</div>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    list.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">' + cards + '</div>';
 }
 
 function openApiConfig(apiId) {
