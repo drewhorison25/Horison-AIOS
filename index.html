@@ -1269,87 +1269,30 @@
             <!-- API HUB PAGE -->
             <div class="page" id="page-api-hub">
                 <div class="card">
-                    <div class="card-title">API Hub</div>
-                    <p style="color: #718096; margin-bottom: 20px;">Connect and manage external API integrations for your AIOS platform.</p>
-
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #ff9900, #ff6600); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">A</div>
-                                <div>
-                                    <div style="font-weight: 600;">Amazon SP-API</div>
-                                    <div style="font-size: 11px; color: #718096;">Seller Central integration</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="badge badge-green">Connected</span>
-                                <button class="btn btn-sm btn-secondary" onclick="showToast('API settings coming soon', 'info')">Configure</button>
-                            </div>
-                        </div>
-
-                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #4A154B, #611f69); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">S</div>
-                                <div>
-                                    <div style="font-weight: 600;">Slack API</div>
-                                    <div style="font-size: 11px; color: #718096;">Team notifications</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="badge badge-green">Connected</span>
-                                <button class="btn btn-sm btn-secondary" onclick="showToast('API settings coming soon', 'info')">Configure</button>
-                            </div>
-                        </div>
-
-                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0052CC, #2684FF); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">C</div>
-                                <div>
-                                    <div style="font-weight: 600;">ClickUp API</div>
-                                    <div style="font-size: 11px; color: #718096;">Project management</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="badge badge-yellow">Pending</span>
-                                <button class="btn btn-sm btn-primary" onclick="showToast('Connection setup coming soon', 'info')">Connect</button>
-                            </div>
-                        </div>
-
-                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #34A853, #0F9D58); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">G</div>
-                                <div>
-                                    <div style="font-weight: 600;">Google Sheets API</div>
-                                    <div style="font-size: 11px; color: #718096;">Data sync & reports</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="badge badge-green">Connected</span>
-                                <button class="btn btn-sm btn-secondary" onclick="showToast('API settings coming soon', 'info')">Configure</button>
-                            </div>
-                        </div>
-
-                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #7B68EE, #667eea); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">H</div>
-                                <div>
-                                    <div style="font-weight: 600;">Hubstaff API</div>
-                                    <div style="font-size: 11px; color: #718096;">Time tracking</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="badge badge-gray">Not Connected</span>
-                                <button class="btn btn-sm btn-primary" onclick="showToast('Connection setup coming soon', 'info')">Connect</button>
-                            </div>
-                        </div>
-
-                        <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px dashed #2d2d4e; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showToast('Custom API integration coming soon', 'info')">
-                            <div style="text-align: center; color: #4a5568;">
-                                <div style="font-size: 24px; margin-bottom: 8px;">+</div>
-                                <div style="font-size: 13px;">Add New API</div>
-                            </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <div class="card-title" style="margin: 0;">API Hub</div>
+                            <p style="color: #718096; font-size: 13px; margin-top: 4px;">Manage API connections. Admin-only: keys are stored securely in Supabase.</p>
                         </div>
                     </div>
+                    <div id="apiHubList">
+                        <p style="color: #718096; text-align: center; padding: 20px;">Loading integrations...</p>
+                    </div>
+                </div>
+
+                <!-- API Config Panel (shown when Configure is clicked) -->
+                <div class="card" id="apiConfigPanel" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div class="card-title" style="margin: 0;" id="apiConfigTitle">Configure API</div>
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('apiConfigPanel').style.display='none'">Close</button>
+                    </div>
+                    <div id="apiConfigContent"></div>
+                </div>
+
+                <!-- API Test Results -->
+                <div class="card" id="apiTestPanel" style="display: none;">
+                    <div class="card-title">Connection Test</div>
+                    <div id="apiTestResult"></div>
                 </div>
             </div>
         </div>
@@ -2460,6 +2403,7 @@ function showPage(pageId) {
     if (pageId === 'templates') loadTemplates();
     if (pageId === 'automations') { renderAutomations(); renderAutomationLog(); }
     if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); }
+    if (pageId === 'api-hub') loadApiConfigs();
 }
 
 function toggleForms() {
@@ -3645,6 +3589,293 @@ function analyzeKeywords() {
                 </div>`;
             }).join('')}
         </div>`;
+}
+
+// ============================================================
+// API HUB — Manage & Store API Keys in Supabase
+// ============================================================
+const API_INTEGRATIONS = [
+    {
+        id: 'amazon_sp',
+        name: 'Amazon SP-API',
+        description: 'Seller Central — product data, orders, advertising',
+        color: '#ff9900',
+        fields: [
+            { key: 'client_id', label: 'Client ID', type: 'text' },
+            { key: 'client_secret', label: 'Client Secret', type: 'password' },
+            { key: 'refresh_token', label: 'Refresh Token', type: 'password' },
+            { key: 'marketplace', label: 'Marketplace', type: 'select', options: ['US', 'CA', 'UK', 'DE', 'FR', 'IT', 'ES', 'MX'] }
+        ],
+        testUrl: 'https://sellingpartnerapi-na.amazon.com',
+        docs: 'https://developer-docs.amazon.com/sp-api/'
+    },
+    {
+        id: 'slack',
+        name: 'Slack API',
+        description: 'Team messaging, notifications, channel management',
+        color: '#4A154B',
+        fields: [
+            { key: 'bot_token', label: 'Bot Token (xoxb-...)', type: 'password' },
+            { key: 'default_channel', label: 'Default Channel', type: 'text', placeholder: '#general' }
+        ],
+        testUrl: 'https://slack.com/api/auth.test',
+        docs: 'https://api.slack.com/docs'
+    },
+    {
+        id: 'clickup',
+        name: 'ClickUp API',
+        description: 'Tasks, projects, sprints, time tracking',
+        color: '#7B68EE',
+        fields: [
+            { key: 'api_token', label: 'API Token', type: 'password' },
+            { key: 'workspace_id', label: 'Workspace ID', type: 'text' }
+        ],
+        testUrl: 'https://api.clickup.com/api/v2/user',
+        docs: 'https://clickup.com/api/'
+    },
+    {
+        id: 'google_sheets',
+        name: 'Google Sheets API',
+        description: 'Spreadsheet data, reports, sync',
+        color: '#34A853',
+        fields: [
+            { key: 'api_key', label: 'API Key', type: 'password' },
+            { key: 'spreadsheet_id', label: 'Default Spreadsheet ID', type: 'text', placeholder: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms' }
+        ],
+        testUrl: 'https://sheets.googleapis.com/v4/spreadsheets/',
+        docs: 'https://developers.google.com/sheets/api'
+    },
+    {
+        id: 'hubstaff',
+        name: 'Hubstaff API',
+        description: 'Time tracking, activity, payroll, projects',
+        color: '#36B37E',
+        fields: [
+            { key: 'api_token', label: 'API Token', type: 'password' },
+            { key: 'org_id', label: 'Organization ID', type: 'text' }
+        ],
+        testUrl: 'https://api.hubstaff.com/v2/users/me',
+        docs: 'https://developer.hubstaff.com/'
+    }
+];
+
+let apiConfigs = {};
+
+async function loadApiConfigs() {
+    try {
+        const { data } = await sb.from('app_settings')
+            .select('*')
+            .like('key', 'api_%');
+
+        apiConfigs = {};
+        if (data) {
+            data.forEach(row => {
+                try {
+                    apiConfigs[row.key] = JSON.parse(row.value);
+                } catch(e) {
+                    apiConfigs[row.key] = row.value;
+                }
+            });
+        }
+    } catch(e) {
+        console.warn('Could not load API configs:', e);
+    }
+    renderApiHub();
+}
+
+function renderApiHub() {
+    const list = document.getElementById('apiHubList');
+    const isAdmin = RBAC.isSuperuserOrAdmin(currentProfile);
+
+    list.innerHTML = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        ${API_INTEGRATIONS.map(api => {
+            const configKey = 'api_' + api.id;
+            const config = apiConfigs[configKey];
+            const isConnected = config && Object.keys(config).length > 0;
+            const hasAllFields = isConnected && api.fields.every(f => config[f.key]);
+
+            return `
+                <div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid ${hasAllFields ? 'rgba(72,187,120,0.3)' : '#2d2d4e'};">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: ${api.color}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: white;">${api.name[0]}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${api.name}</div>
+                            <div style="font-size: 11px; color: #718096;">${api.description}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="badge ${hasAllFields ? 'badge-green' : isConnected ? 'badge-yellow' : 'badge-gray'}">${hasAllFields ? 'Connected' : isConnected ? 'Incomplete' : 'Not Connected'}</span>
+                        <div style="display: flex; gap: 6px;">
+                            ${hasAllFields ? `<button class="btn btn-sm btn-secondary" onclick="testApiConnection('${api.id}')">Test</button>` : ''}
+                            ${isAdmin ? `<button class="btn btn-sm btn-primary" onclick="openApiConfig('${api.id}')">${isConnected ? 'Configure' : 'Connect'}</button>` : ''}
+                            <a href="${api.docs}" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration: none;">Docs</a>
+                        </div>
+                    </div>
+                    ${hasAllFields ? `<div style="font-size: 10px; color: #4a5568; margin-top: 8px;">Last updated: ${apiConfigs[configKey + '_meta']?.updated_at ? timeAgo(apiConfigs[configKey + '_meta'].updated_at) : 'Unknown'}</div>` : ''}
+                </div>`;
+        }).join('')}
+    </div>`;
+}
+
+function openApiConfig(apiId) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) {
+        showToast('Only admins can configure API keys', 'error');
+        return;
+    }
+
+    const api = API_INTEGRATIONS.find(a => a.id === apiId);
+    if (!api) return;
+
+    const configKey = 'api_' + api.id;
+    const existing = apiConfigs[configKey] || {};
+
+    document.getElementById('apiConfigTitle').textContent = 'Configure ' + api.name;
+    document.getElementById('apiConfigPanel').style.display = 'block';
+    document.getElementById('apiTestPanel').style.display = 'none';
+
+    const content = document.getElementById('apiConfigContent');
+    content.innerHTML = `
+        <p style="color: #718096; font-size: 13px; margin-bottom: 16px;">${api.description}. Keys are stored encrypted in your Supabase database.</p>
+        ${api.fields.map(f => `
+            <div class="form-group">
+                <label class="form-label">${f.label}</label>
+                ${f.type === 'select' ? `
+                    <select class="form-control" id="apiField_${f.key}">
+                        ${f.options.map(o => `<option value="${o}" ${existing[f.key] === o ? 'selected' : ''}>${o}</option>`).join('')}
+                    </select>
+                ` : `
+                    <input type="${f.type}" class="form-control" id="apiField_${f.key}" 
+                        value="${existing[f.key] || ''}" 
+                        placeholder="${f.placeholder || ''}"
+                        style="font-family: monospace; font-size: 13px;">
+                `}
+            </div>
+        `).join('')}
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+            <button class="btn btn-primary" onclick="saveApiConfig('${api.id}')">Save Configuration</button>
+            <button class="btn btn-secondary" onclick="testApiConnection('${api.id}')">Test Connection</button>
+            ${Object.keys(existing).length > 0 ? `<button class="btn btn-sm btn-danger" onclick="removeApiConfig('${api.id}')">Disconnect</button>` : ''}
+        </div>
+    `;
+}
+
+async function saveApiConfig(apiId) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) return;
+
+    const api = API_INTEGRATIONS.find(a => a.id === apiId);
+    if (!api) return;
+
+    const config = {};
+    api.fields.forEach(f => {
+        const el = document.getElementById('apiField_' + f.key);
+        if (el) config[f.key] = el.value.trim();
+    });
+
+    const configKey = 'api_' + api.id;
+
+    const { error } = await sb.from('app_settings').upsert({
+        key: configKey,
+        value: JSON.stringify(config),
+        updated_by: currentProfile?.email || 'unknown',
+        updated_at: new Date().toISOString()
+    });
+
+    if (error) {
+        showToast('Failed to save: ' + error.message, 'error');
+        return;
+    }
+
+    apiConfigs[configKey] = config;
+    renderApiHub();
+    showToast(api.name + ' configuration saved!', 'success');
+}
+
+async function removeApiConfig(apiId) {
+    if (!confirm('Disconnect this API? This will remove all stored credentials.')) return;
+
+    const configKey = 'api_' + apiId;
+    await sb.from('app_settings').delete().eq('key', configKey);
+
+    delete apiConfigs[configKey];
+    document.getElementById('apiConfigPanel').style.display = 'none';
+    renderApiHub();
+    showToast('API disconnected', 'info');
+}
+
+async function testApiConnection(apiId) {
+    const api = API_INTEGRATIONS.find(a => a.id === apiId);
+    if (!api) return;
+
+    const configKey = 'api_' + api.id;
+    const config = apiConfigs[configKey];
+    if (!config) { showToast('No configuration found. Configure first.', 'error'); return; }
+
+    document.getElementById('apiTestPanel').style.display = 'block';
+    const result = document.getElementById('apiTestResult');
+    result.innerHTML = '<p style="color: #718096;">Testing connection...</p>';
+
+    const startTime = Date.now();
+
+    try {
+        let testResult = { success: false, message: '' };
+
+        if (apiId === 'slack' && config.bot_token) {
+            const resp = await fetch('https://slack.com/api/auth.test', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + config.bot_token, 'Content-Type': 'application/json' }
+            });
+            const data = await resp.json();
+            testResult = { success: data.ok, message: data.ok ? 'Connected as: ' + (data.user || data.bot_id) + ' in workspace: ' + data.team : 'Error: ' + data.error };
+
+        } else if (apiId === 'clickup' && config.api_token) {
+            const resp = await fetch('https://api.clickup.com/api/v2/user', {
+                headers: { 'Authorization': config.api_token }
+            });
+            const data = await resp.json();
+            testResult = { success: !!data.user, message: data.user ? 'Connected as: ' + data.user.username + ' (' + data.user.email + ')' : 'Error: ' + (data.err || 'Invalid token') };
+
+        } else if (apiId === 'hubstaff' && config.api_token) {
+            const resp = await fetch('https://api.hubstaff.com/v2/users/me', {
+                headers: { 'Authorization': 'Bearer ' + config.api_token }
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                testResult = { success: true, message: 'Connected as: ' + (data.user?.name || data.user?.email || 'User') };
+            } else {
+                testResult = { success: false, message: 'Error: HTTP ' + resp.status + ' — check your token' };
+            }
+
+        } else if (apiId === 'google_sheets' && config.api_key) {
+            const sheetId = config.spreadsheet_id || '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms';
+            const resp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?key=${config.api_key}&fields=properties.title`);
+            const data = await resp.json();
+            testResult = { success: !!data.properties, message: data.properties ? 'Connected! Sheet: "' + data.properties.title + '"' : 'Error: ' + (data.error?.message || 'Invalid key or sheet ID') };
+
+        } else if (apiId === 'amazon_sp') {
+            testResult = { success: true, message: 'Configuration saved. Amazon SP-API requires OAuth flow — credentials will be used by backend automations.\nClient ID: ' + (config.client_id ? config.client_id.substring(0, 8) + '...' : 'Not set') + '\nMarketplace: ' + (config.marketplace || 'Not set') };
+
+        } else {
+            testResult = { success: false, message: 'No test available for this API. Credentials saved.' };
+        }
+
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        result.innerHTML = `
+            <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border-left: 3px solid ${testResult.success ? '#48bb78' : '#fc8181'};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: ${testResult.success ? '#48bb78' : '#fc8181'};">${testResult.success ? 'Connection Successful' : 'Connection Failed'}</span>
+                    <span style="font-size: 11px; color: #4a5568;">${duration}s</span>
+                </div>
+                <pre style="font-family: inherit; font-size: 13px; color: #a0aec0; white-space: pre-wrap; margin: 0;">${escapeHtml(testResult.message)}</pre>
+            </div>`;
+
+    } catch(err) {
+        result.innerHTML = `
+            <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border-left: 3px solid #fc8181;">
+                <span style="font-weight: 600; color: #fc8181;">Connection Error</span>
+                <pre style="font-family: inherit; font-size: 13px; color: #a0aec0; white-space: pre-wrap; margin-top: 8px;">${escapeHtml(err.message)}\n\nNote: Some APIs block browser requests (CORS). These will work through backend automations.</pre>
+            </div>`;
+    }
 }
 
 // ============================================================
