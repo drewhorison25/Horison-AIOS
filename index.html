@@ -1224,7 +1224,10 @@
             <!-- LOGIN HISTORY PAGE -->
             <div class="page" id="page-login-history">
                 <div class="card">
-                    <div class="card-title">System Login History</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <div class="card-title" style="margin: 0;">System Login History</div>
+                        <button onclick="clearLoginHistory()" style="padding: 6px 14px; background: rgba(252,129,129,0.15); color: #fc8181; border: 1px solid rgba(252,129,129,0.4); border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">Clear History</button>
+                    </div>
                     <p style="font-size: 13px; color: #718096; margin-bottom: 20px;">Track all user logins, sessions, and system access (stored in Supabase)</p>
 
                     <div class="grid-4" style="margin-bottom: 24px;">
@@ -2318,6 +2321,17 @@ async function logLoginEvent(email, eventType, status) {
     } catch (e) {
         console.warn('Could not log event:', e);
     }
+}
+
+async function clearLoginHistory() {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can clear history', 'error'); return; }
+    if (!confirm('Are you sure you want to delete ALL login history? This cannot be undone.')) return;
+
+    const { error } = await sb.from('login_history').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    showToast('Login history cleared', 'success');
+    loadLoginHistory();
 }
 
 async function loadLoginHistory() {
