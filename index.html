@@ -1005,7 +1005,10 @@
 
                 <!-- Execution Log -->
                 <div class="card">
-                    <div class="card-title">Execution Log</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="card-title" style="margin: 0;">Execution Log</div>
+                        <button onclick="clearAutomationLog()" style="padding: 4px 12px; background: rgba(252,129,129,0.15); color: #fc8181; border: 1px solid rgba(252,129,129,0.3); border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600;">Clear Log</button>
+                    </div>
                     <div id="automationLogList">
                         <p style="color: #718096; text-align: center; padding: 20px;">No executions yet. Run an automation to see results here.</p>
                     </div>
@@ -2914,8 +2917,7 @@ function renderAutomations() {
         <div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid ${a.enabled ? '#2d2d4e' : '#1e1e32'}; margin-bottom: 12px; ${!a.enabled ? 'opacity: 0.6;' : ''}">
             <div style="display: flex; justify-content: space-between; align-items: start;">
                 <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                        <div></div>
+                    <div style="margin-bottom: 6px;">
                         <div>
                             <div style="font-weight: 600;">${escapeHtml(a.name)}</div>
                             <div style="font-size: 12px; color: #718096;">
@@ -2926,7 +2928,7 @@ function renderAutomations() {
                     </div>
                     ${a.description ? `<div style="font-size: 12px; color: #4a5568; margin-top: 6px; padding-left: 30px;">${escapeHtml(a.description).substring(0, 150)}</div>` : ''}
                     <div style="font-size: 11px; color: #4a5568; margin-top: 6px; padding-left: 30px;">
-                        Runs: ${a.run_count} · Last: ${a.last_run ? timeAgo(a.last_run) : 'Never'}
+                        Runs: ${a.run_count || 0} · Last: ${a.last_run ? timeAgo(a.last_run) : 'Never'}
                         ${a.last_status ? ` · <span style="color: ${a.last_status === 'success' ? '#48bb78' : '#fc8181'};">${a.last_status === 'success' ? '✓ Success' : '✗ Failed'}</span>` : ''}
                     </div>
                 </div>
@@ -3121,6 +3123,14 @@ async function executeWithClaude(a) {
     return data.content?.map(b => b.type === 'text' ? b.text : '').join('') || 'Completed.';
 }
 
+async function clearAutomationLog() {
+    if (!confirm('Clear all execution logs?')) return;
+    await sb.from('automation_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    automationLogs = [];
+    renderAutomationLog();
+    showToast('Execution log cleared', 'info');
+}
+
 function renderAutomationLog() {
     const list = document.getElementById('automationLogList');
     if (automationLogs.length === 0) {
@@ -3155,11 +3165,14 @@ async function toggleAutomation(id) {
 }
 
 async function deleteAutomation(id) {
-    if (!confirm('Delete this automation?')) return;
+    if (!confirm('Delete this automation and all its logs?')) return;
+    await sb.from('automation_logs').delete().eq('automation_id', id);
     await sb.from('automations').delete().eq('id', id);
     automations = automations.filter(x => x.id !== id);
+    automationLogs = automationLogs.filter(l => l.automation_id !== id);
     renderAutomations();
-    showToast('Automation deleted', 'info');
+    renderAutomationLog();
+    showToast('Automation and logs deleted', 'info');
 }
 
 // ============================================================
