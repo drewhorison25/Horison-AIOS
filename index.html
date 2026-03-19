@@ -756,7 +756,7 @@
         <div class="form-toggle">
             <p id="toggleText">
                 Need an account?
-                <a href="#" onclick="alert('Account creation is restricted.\\n\\nPlease contact your Admin or Superuser to create your AIOS account.'); return false;" id="toggleLink">Contact Admin</a>
+                <a href="#" onclick="alert('Account creation is restricted.\n\nPlease contact your Admin or Superuser to create your AIOS account.'); return false;" id="toggleLink">Contact Admin</a>
             </p>
             <p style="font-size: 12px; color: #4a5568; margin-top: 8px;">
                 Only administrators can create new user accounts
@@ -923,8 +923,13 @@
                     <div style="margin-bottom: 16px;">
                         <button class="btn btn-primary" onclick="openAddDocumentModal()">+ Add Document</button>
                     </div>
-                    <div id="documentsList">
-                        <p style="color: #718096; text-align: center; padding: 20px;">Loading documents...</p>
+                    <div id="documentsList"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                        <div style="font-size: 12px; color: #718096;" id="docPageInfo"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="docPrevBtn" onclick="docPagePrev()" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" id="docNextBtn" onclick="docPageNext()">Next</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -936,8 +941,13 @@
                     <div style="margin-bottom: 16px;">
                         <button class="btn btn-primary" onclick="openAddTemplateModal()">+ Add Template</button>
                     </div>
-                    <div id="templatesList">
-                        <p style="color: #718096; text-align: center; padding: 20px;">Loading templates...</p>
+                    <div id="templatesList"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                        <div style="font-size: 12px; color: #718096;" id="tplPageInfo"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="tplPrevBtn" onclick="tplPagePrev()" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" id="tplNextBtn" onclick="tplPageNext()">Next</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1009,8 +1019,13 @@
                         <div class="card-title" style="margin: 0;">Execution Log</div>
                         <button onclick="clearAutomationLog()" style="padding: 4px 12px; background: rgba(252,129,129,0.15); color: #fc8181; border: 1px solid rgba(252,129,129,0.3); border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600;">Clear Log</button>
                     </div>
-                    <div id="automationLogList">
-                        <p style="color: #718096; text-align: center; padding: 20px;">No executions yet. Run an automation to see results here.</p>
+                    <div id="automationLogList"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                        <div style="font-size: 12px; color: #718096;" id="autoLogPageInfo"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="autoLogPrevBtn" onclick="autoLogPagePrev()" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" id="autoLogNextBtn" onclick="autoLogPageNext()">Next</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1081,7 +1096,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                             <div>
                                 <div class="card-title" style="margin: 0;">Development Queue</div>
-                                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Approved tools being built. Track progress from spec → development → testing → live.</p>
+                                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Approved tools being built. Track progress from spec - development - testing - live.</p>
                             </div>
                         </div>
                         <div id="devQueueList"></div>
@@ -1126,8 +1141,13 @@
                     </div>
                     <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileUpload(event)">
 
-                    <div id="storageFilesList">
-                        <p style="color: #718096; text-align: center; padding: 20px;">Loading files...</p>
+                    <div id="storageFilesList"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                        <div style="font-size: 12px; color: #718096;" id="storagePageInfo"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="storagePrevBtn" onclick="storagePagePrev()" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" id="storageNextBtn" onclick="storagePageNext()">Next</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1135,9 +1155,24 @@
             <!-- TEAM PAGE -->
             <div class="page" id="page-team">
                 <div class="card">
-                    <div class="card-title">Team Members</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div class="card-title" style="margin: 0;">Team Members</div>
+                        <div style="font-size: 12px; color: #718096;" id="teamCount"></div>
+                    </div>
+                    <!-- Search Bar -->
+                    <div style="margin-bottom: 16px;">
+                        <input type="text" class="form-control" id="teamSearchInput" placeholder="Search by name, email, or department..." oninput="filterTeam()" style="font-size: 13px;">
+                    </div>
                     <div id="teamList">
                         <p style="color: #718096; text-align: center; padding: 20px;">Loading team...</p>
+                    </div>
+                    <!-- Pagination -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                        <div style="font-size: 12px; color: #718096;" id="teamPageInfo">Page 1</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="teamPrevBtn" onclick="teamPagePrev()" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" id="teamNextBtn" onclick="teamPageNext()">Next</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1213,7 +1248,7 @@
 
                         <div class="form-group">
                             <label class="form-label">Temporary Password</label>
-                            <input type="text" class="form-control" id="adminUserPassword" value="TempPass123!" required minlength="6">
+                            <input type="text" class="form-control" id="adminUserPassword" value="" placeholder="Enter temporary password" required minlength="6">
                             <small style="color: #718096; font-size: 11px;">User should change this on first login</small>
                         </div>
 
@@ -1260,7 +1295,6 @@
                                     <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #667eea;">User</th>
                                     <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #667eea;">Email</th>
                                     <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #667eea;">Access Level</th>
-                                    <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #667eea;">Event</th>
                                     <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #667eea;">Device / Browser</th>
                                     <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #667eea;">Status</th>
                                 </tr>
@@ -1268,6 +1302,15 @@
                             <tbody id="loginHistoryTable">
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                        <div style="font-size: 12px; color: #718096;" id="loginPageInfo">Page 1</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="loginPrevBtn" onclick="loginHistoryPrev()" disabled>Previous</button>
+                            <button class="btn btn-sm btn-secondary" id="loginNextBtn" onclick="loginHistoryNext()">Next</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1856,6 +1899,20 @@ async function logout() {
         await logLoginEvent(currentUser.email, 'logout', 'logout');
     }
 
+    // Log logout event
+    try {
+        await sb.from('login_history').insert({
+            email: currentProfile?.email || currentUser?.email || '',
+            name: currentProfile?.name || '',
+            access_level: currentProfile?.access_level || '',
+            event_type: 'logout',
+            status: 'success',
+            device: navigator.platform || '',
+            browser: navigator.userAgent?.split(' ').pop() || '',
+            created_at: new Date().toISOString()
+        });
+    } catch(e) {}
+
     await sb.auth.signOut();
     currentUser = null;
     currentProfile = null;
@@ -1937,7 +1994,7 @@ function showApp() {
     const teamNav = document.getElementById('navTeam');
     if (teamNav) teamNav.style.display = RBAC.can(currentProfile, 'action:view-team') ? 'flex' : 'none';
 
-    console.log(`✓ RBAC: ${currentProfile?.email} → ${currentProfile?.access_level} (${RBAC.getDisplayLabel(currentProfile?.access_level)})`);
+    console.log(`RBAC: ${currentProfile?.email} → ${currentProfile?.access_level} (${RBAC.getDisplayLabel(currentProfile?.access_level)})`);
 
     // Load all data
     loadAllData();
@@ -1954,6 +2011,7 @@ async function loadAllData() {
         loadTeam(),
         loadToolRequests(),
         loadAutomations(),
+        loadApiConfigs(),
     ]);
     updateStats();
 }
@@ -1976,33 +2034,33 @@ async function updateStats() {
 // ============================================================
 // DOCUMENTS (Supabase Database)
 // ============================================================
+let allDocs = []; let docPage = 1; const DOC_PAGE_SIZE = 10;
+
 async function loadDocuments() {
-    const { data, error } = await sb
-        .from('documents')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    const list = document.getElementById('documentsList');
-    if (!data || data.length === 0) {
-        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No documents yet. Click "Add Document" to create one.</p>';
-        return;
-    }
-
-    list.innerHTML = data.map(doc => `
-        <div class="file-item">
-            <div class="file-info">
-                <div></div>
-                <div>
-                    <div class="file-name">${escapeHtml(doc.title)}</div>
-                    <div class="file-meta"><span class="badge badge-blue">${doc.category}</span> · Added ${timeAgo(doc.created_at)}</div>
-                </div>
-            </div>
-            <div class="file-actions">
-                <button class="btn btn-sm btn-danger" onclick="deleteDocument('${doc.id}')">Delete</button>
-            </div>
-        </div>
-    `).join('');
+    const { data } = await sb.from('documents').select('*').order('created_at', { ascending: false });
+    allDocs = data || [];
+    docPage = 1;
+    renderDocuments();
 }
+
+function renderDocuments() {
+    const list = document.getElementById('documentsList');
+    if (allDocs.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No documents yet. Click "Add Document" to create one.</p>';
+        updatePag('doc', 0); return;
+    }
+    const start = (docPage - 1) * DOC_PAGE_SIZE;
+    const page = allDocs.slice(start, start + DOC_PAGE_SIZE);
+    const q = "\'";
+    list.innerHTML = page.map(doc =>
+        '<div class="file-item"><div class="file-info"><div><div class="file-name">' + escapeHtml(doc.title) + '</div>' +
+        '<div class="file-meta"><span class="badge badge-blue">' + doc.category + '</span> · Added ' + timeAgo(doc.created_at) + '</div></div></div>' +
+        '<div class="file-actions"><button class="btn btn-sm btn-danger" onclick="deleteDocument(' + q + doc.id + q + ')">Delete</button></div></div>'
+    ).join('');
+    updatePag('doc', allDocs.length);
+}
+function docPagePrev() { if (docPage > 1) { docPage--; renderDocuments(); } }
+function docPageNext() { if (docPage < Math.ceil(allDocs.length / DOC_PAGE_SIZE)) { docPage++; renderDocuments(); } }
 
 function openAddDocumentModal() {
     if (!RBAC.can(currentProfile, 'action:create-document')) { showToast('Access denied.', 'error'); return; }
@@ -2048,33 +2106,33 @@ async function deleteDocument(id) {
 // ============================================================
 // TEMPLATES (Supabase Database)
 // ============================================================
+let allTpls = []; let tplPage = 1; const TPL_PAGE_SIZE = 10;
+
 async function loadTemplates() {
-    const { data } = await sb
-        .from('templates')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    const list = document.getElementById('templatesList');
-    if (!data || data.length === 0) {
-        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No templates yet. Click "Add Template" to create one.</p>';
-        return;
-    }
-
-    list.innerHTML = data.map(tpl => `
-        <div class="file-item">
-            <div class="file-info">
-                <div></div>
-                <div>
-                    <div class="file-name">${escapeHtml(tpl.name)}</div>
-                    <div class="file-meta"><span class="badge badge-green">${tpl.category}</span> · Added ${timeAgo(tpl.created_at)}</div>
-                </div>
-            </div>
-            <div class="file-actions">
-                <button class="btn btn-sm btn-danger" onclick="deleteTemplate('${tpl.id}')">Delete</button>
-            </div>
-        </div>
-    `).join('');
+    const { data } = await sb.from('templates').select('*').order('created_at', { ascending: false });
+    allTpls = data || [];
+    tplPage = 1;
+    renderTemplates();
 }
+
+function renderTemplates() {
+    const list = document.getElementById('templatesList');
+    if (allTpls.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No templates yet. Click "Add Template" to create one.</p>';
+        updatePag('tpl', 0); return;
+    }
+    const start = (tplPage - 1) * TPL_PAGE_SIZE;
+    const page = allTpls.slice(start, start + TPL_PAGE_SIZE);
+    const q = "\'";
+    list.innerHTML = page.map(tpl =>
+        '<div class="file-item"><div class="file-info"><div><div class="file-name">' + escapeHtml(tpl.name) + '</div>' +
+        '<div class="file-meta"><span class="badge badge-green">' + tpl.category + '</span> · Added ' + timeAgo(tpl.created_at) + '</div></div></div>' +
+        '<div class="file-actions"><button class="btn btn-sm btn-danger" onclick="deleteTemplate(' + q + tpl.id + q + ')">Delete</button></div></div>'
+    ).join('');
+    updatePag('tpl', allTpls.length);
+}
+function tplPagePrev() { if (tplPage > 1) { tplPage--; renderTemplates(); } }
+function tplPageNext() { if (tplPage < Math.ceil(allTpls.length / TPL_PAGE_SIZE)) { tplPage++; renderTemplates(); } }
 
 function openAddTemplateModal() {
     if (!RBAC.can(currentProfile, 'action:create-template')) { showToast('Access denied.', 'error'); return; }
@@ -2119,42 +2177,53 @@ async function deleteTemplate(id) {
 // ============================================================
 // CLOUD STORAGE (Supabase Storage)
 // ============================================================
+let allStorageFiles = []; let storagePage = 1; const STORAGE_PAGE_SIZE = 10;
+
 async function loadStorageFiles() {
     if (!currentUser) return;
 
-    const { data: files, error } = await sb.storage
+    const { data: files } = await sb.storage
         .from('aios-files')
-        .list(currentUser.id + '/', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+        .list(currentUser.id + '/', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
 
+    allStorageFiles = files || [];
+    storagePage = 1;
+    renderStorageFiles();
+}
+
+function renderStorageFiles() {
     const list = document.getElementById('storageFilesList');
 
-    if (!files || files.length === 0) {
+    if (allStorageFiles.length === 0) {
         list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No files uploaded yet. Use the upload area above.</p>';
+        updatePag('storage', 0);
         return;
     }
 
-    list.innerHTML = files.map(file => {
+    const start = (storagePage - 1) * STORAGE_PAGE_SIZE;
+    const page = allStorageFiles.slice(start, start + STORAGE_PAGE_SIZE);
+    const q = "'";
+
+    list.innerHTML = page.map(file => {
         const ext = file.name.split('.').pop().toLowerCase();
         const icon = getFileIcon(ext);
         const size = formatBytes(file.metadata?.size || 0);
 
-        return `
-            <div class="file-item">
-                <div class="file-info">
-                    <div class="file-icon">${icon}</div>
-                    <div>
-                        <div class="file-name">${escapeHtml(file.name)}</div>
-                        <div class="file-meta">${size} · Uploaded ${timeAgo(file.created_at)}</div>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="downloadFile('${file.name}')">Download</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteFile('${file.name}')">Delete</button>
-                </div>
-            </div>
-        `;
+        return '<div class="file-item"><div class="file-info">' +
+            '<div class="file-icon">' + icon + '</div>' +
+            '<div><div class="file-name">' + escapeHtml(file.name) + '</div>' +
+            '<div class="file-meta">' + size + ' · Uploaded ' + timeAgo(file.created_at) + '</div></div></div>' +
+            '<div class="file-actions">' +
+            '<button class="btn btn-sm btn-secondary" onclick="downloadFile(' + q + file.name + q + ')">Download</button> ' +
+            '<button class="btn btn-sm btn-danger" onclick="deleteFile(' + q + file.name + q + ')">Delete</button>' +
+            '</div></div>';
     }).join('');
+
+    updatePag('storage', allStorageFiles.length);
 }
+
+function storagePagePrev() { if (storagePage > 1) { storagePage--; renderStorageFiles(); } }
+function storagePageNext() { if (storagePage < Math.ceil(allStorageFiles.length / STORAGE_PAGE_SIZE)) { storagePage++; renderStorageFiles(); } }
 
 async function handleFileUpload(event) {
     const files = event.target.files;
@@ -2220,16 +2289,19 @@ async function deleteFile(fileName) {
 // ============================================================
 // TEAM (from profiles table)
 // ============================================================
+let allTeamMembers = [];
+let teamPage = 1;
+const TEAM_PAGE_SIZE = 5;
+
 async function loadTeam() {
     const { data } = await sb.from('profiles').select('*').order('access_level');
-    const list = document.getElementById('teamList');
 
     if (!data || data.length === 0) {
-        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No team members found.</p>';
+        allTeamMembers = [];
+        renderTeam();
         return;
     }
 
-    // Sort by access level hierarchy
     const levelOrder = { 'superuser': 1, 'admin': 2, 'user': 3 };
     data.sort((a, b) => {
         const aP = RBAC.parse(a.access_level);
@@ -2237,49 +2309,96 @@ async function loadTeam() {
         return (levelOrder[aP.primary] || 9) - (levelOrder[bP.primary] || 9);
     });
 
-    list.innerHTML = data.map(user => {
-        const isMe = currentUser && currentUser.id === user.id;
-        const canManage = RBAC.can(currentProfile, 'action:change-role');
+    allTeamMembers = data;
+    teamPage = 1;
+    renderTeam();
+}
 
-        return `
-            <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid ${isMe ? '#667eea' : '#2d2d4e'}; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div style="flex: 1;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-weight: 700;">
-                                ${user.avatar || '?'}
-                            </div>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 2px;">
-                                    ${escapeHtml(user.name)} ${isMe ? '(You)' : ''}
-                                </div>
-                                <div style="font-size: 12px; color: #718096;">${escapeHtml(user.email)}</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 11px; color: #4a5568; margin-top: 8px; padding-left: 50px;">
-                            Department: ${user.dept || 'N/A'}
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="badge ${RBAC.getBadgeClass(user.access_level)}">${RBAC.getDisplayLabel(user.access_level)}</span>
-                        <div style="font-size: 9px; color: #4a5568; margin-top: 4px; font-family: monospace;">${user.access_level || 'user-regular'}</div>
-                        ${canManage && !isMe ? `
-                            <div style="margin-top: 8px;">
-                                <button class="btn btn-sm btn-secondary" onclick="changeUserRole('${user.id}')" style="font-size: 11px;">Change Access</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
+function filterTeam() {
+    teamPage = 1;
+    renderTeam();
+}
+
+function getFilteredTeam() {
+    const query = (document.getElementById('teamSearchInput')?.value || '').toLowerCase().trim();
+    if (!query) return allTeamMembers;
+    return allTeamMembers.filter(u =>
+        (u.name || '').toLowerCase().includes(query) ||
+        (u.email || '').toLowerCase().includes(query) ||
+        (u.dept || '').toLowerCase().includes(query) ||
+        (u.access_level || '').toLowerCase().includes(query)
+    );
+}
+
+function renderTeam() {
+    const list = document.getElementById('teamList');
+    const filtered = getFilteredTeam();
+    const canManage = RBAC.can(currentProfile, 'action:change-role');
+    const totalPages = Math.max(1, Math.ceil(filtered.length / TEAM_PAGE_SIZE));
+
+    document.getElementById('teamCount').textContent = filtered.length + ' member' + (filtered.length !== 1 ? 's' : '');
+
+    if (filtered.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 16px;">No team members found.</p>';
+        updateTeamPagination(0);
+        return;
+    }
+
+    const start = (teamPage - 1) * TEAM_PAGE_SIZE;
+    const pageData = filtered.slice(start, start + TEAM_PAGE_SIZE);
+
+    list.innerHTML = pageData.map(user => {
+        const isMe = currentUser && currentUser.id === user.id;
+        const q = "'";
+
+        let actions = '';
+        if (canManage && !isMe) {
+            actions += '<button class="btn btn-sm btn-secondary" onclick="changeUserRole(' + q + user.id + q + ')" style="font-size:10px;padding:3px 8px;">Change Access</button> ';
+            actions += '<button onclick="removeUser(' + q + user.id + q + ',' + q + escapeHtml(user.name) + q + ')" style="padding:3px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:6px;cursor:pointer;font-size:10px;font-weight:600;">Remove</button>';
+        }
+
+        return '<div style="background:#0f0f1a;padding:10px 14px;border-radius:8px;border:1px solid ' + (isMe ? '#667eea' : '#2d2d4e') + ';margin-bottom:8px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
+                    '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">' + (user.avatar || '?') + '</div>' +
+                    '<div style="min-width:0;">' +
+                        '<div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(user.name) + (isMe ? ' <span style="color:#667eea;font-size:11px;">(You)</span>' : '') + '</div>' +
+                        '<div style="font-size:11px;color:#718096;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(user.email) + ' · ' + (user.dept || 'N/A') + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+                    '<span class="badge ' + RBAC.getBadgeClass(user.access_level) + '" style="font-size:9px;">' + RBAC.getDisplayLabel(user.access_level) + '</span>' +
+                    actions +
+                '</div>' +
+            '</div>' +
+        '</div>';
     }).join('');
+
+    updateTeamPagination(filtered.length);
+}
+
+function updateTeamPagination(total) {
+    const totalPages = Math.max(1, Math.ceil(total / TEAM_PAGE_SIZE));
+    document.getElementById('teamPageInfo').textContent = 'Page ' + teamPage + ' of ' + totalPages;
+    document.getElementById('teamPrevBtn').disabled = teamPage <= 1;
+    document.getElementById('teamNextBtn').disabled = teamPage >= totalPages;
+}
+
+function teamPagePrev() {
+    if (teamPage > 1) { teamPage--; renderTeam(); }
+}
+
+function teamPageNext() {
+    const total = getFilteredTeam().length;
+    const totalPages = Math.ceil(total / TEAM_PAGE_SIZE);
+    if (teamPage < totalPages) { teamPage++; renderTeam(); }
 }
 
 async function changeUserRole(userId) {
     if (!RBAC.can(currentProfile, 'action:change-role')) { alert('Access denied.'); return; }
 
-    const options = RBAC.allLevels.join('\n• ');
-    const newLevel = prompt(`Enter new access level:\n\n• ${options}\n\nFormat: primary-sub`);
+    const options = RBAC.allLevels.join('\n- ');
+    const newLevel = prompt('Enter new access level:\n\n- ' + options + '\n\nFormat: primary-sub');
     if (!newLevel || !RBAC.allLevels.includes(newLevel)) {
         if (newLevel) alert('Invalid access level. Must be one of: ' + RBAC.allLevels.join(', '));
         return;
@@ -2290,6 +2409,18 @@ async function changeUserRole(userId) {
 
     await loadTeam();
     showToast('Access level updated to ' + RBAC.getDisplayLabel(newLevel), 'success');
+}
+
+async function removeUser(userId, userName) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can remove users', 'error'); return; }
+    if (userId === currentUser?.id) { showToast('You cannot remove yourself', 'error'); return; }
+    if (!confirm('Remove ' + userName + ' from the team? This deletes their profile. Their Supabase auth account will remain but they will not be able to access AIOS.')) return;
+
+    const { error } = await sb.from('profiles').delete().eq('id', userId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    await loadTeam();
+    showToast(userName + ' removed from team', 'success');
 }
 
 // ============================================================
@@ -2327,7 +2458,7 @@ async function adminCreateUser(event) {
 
     document.getElementById('adminAddUserResult').innerHTML = `
         <div style="background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.3); color: #48bb78; padding: 16px; border-radius: 8px; margin-top: 16px;">
-            ✓ User created!<br><br>
+            User created!<br><br>
             <strong>Email:</strong> ${email}<br>
             <strong>Password:</strong> ${password}<br>
             <strong>Access Level:</strong> ${RBAC.getDisplayLabel(accessLevel)} <code style="font-size: 11px; color: #a0aec0;">(${accessLevel})</code><br><br>
@@ -2336,7 +2467,7 @@ async function adminCreateUser(event) {
     `;
 
     document.getElementById('adminAddUserForm').reset();
-    document.getElementById('adminUserPassword').value = 'TempPass123!';
+    document.getElementById('adminUserPassword').value = '';
     await loadTeam();
     return false;
 }
@@ -2366,56 +2497,103 @@ async function clearLoginHistory() {
     if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can clear history', 'error'); return; }
     if (!confirm('Are you sure you want to delete ALL login history? This cannot be undone.')) return;
 
-    const { error } = await sb.from('login_history').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    // Fetch all IDs first, then delete in batches
+    const { data: allLogs } = await sb.from('login_history').select('id');
+    if (allLogs && allLogs.length > 0) {
+        const ids = allLogs.map(l => l.id);
+        // Delete in chunks of 50
+        for (let i = 0; i < ids.length; i += 50) {
+            const chunk = ids.slice(i, i + 50);
+            await sb.from('login_history').delete().in('id', chunk);
+        }
+    }
 
-    showToast('Login history cleared', 'success');
+    showToast('Login history cleared (' + (allLogs?.length || 0) + ' records deleted)', 'success');
+    loginHistoryPage = 1;
     loadLoginHistory();
 }
 
+let loginHistoryPage = 1;
+const LOGIN_PAGE_SIZE = 20;
+let loginHistoryData = [];
+let loginHistoryTotal = 0;
+
 async function loadLoginHistory() {
+    // Get total count
+    const { count } = await sb.from('login_history').select('*', { count: 'exact', head: true });
+    loginHistoryTotal = count || 0;
+
+    // Fetch current page
+    const from = (loginHistoryPage - 1) * LOGIN_PAGE_SIZE;
+    const to = from + LOGIN_PAGE_SIZE - 1;
+
     const { data } = await sb
         .from('login_history')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .range(from, to);
+
+    loginHistoryData = data || [];
 
     const table = document.getElementById('loginHistoryTable');
-    if (!data || data.length === 0) {
-        table.innerHTML = '<tr><td colspan="4" style="padding: 40px; text-align: center; color: #718096;">No login events yet</td></tr>';
+    if (loginHistoryData.length === 0 && loginHistoryPage === 1) {
+        table.innerHTML = '<tr><td colspan="6" style="padding: 40px; text-align: center; color: #718096;">No login events yet</td></tr>';
+        updateLoginPagination();
+        updateLoginStats([]);
         return;
     }
 
-    // Stats
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEvents = data.filter(e => new Date(e.created_at) >= today);
-    document.getElementById('totalLoginsToday').textContent = todayEvents.filter(e => e.status === 'success').length;
-    document.getElementById('uniqueUsersToday').textContent = new Set(todayEvents.filter(e => e.status === 'success').map(e => e.email)).size;
-    document.getElementById('failedLoginsToday').textContent = todayEvents.filter(e => e.status === 'failed').length;
-    document.getElementById('activeSessionsNow').textContent = '—';
+    // Stats (fetch today's data separately for accuracy)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { data: todayData } = await sb.from('login_history')
+        .select('*')
+        .gte('created_at', todayStart.toISOString());
+    updateLoginStats(todayData || []);
 
-    table.innerHTML = data.slice(0, 50).map(event => {
+    table.innerHTML = loginHistoryData.map(event => {
         const statusBadge = {
             success: '<span class="badge badge-green">Success</span>',
             failed: '<span class="badge badge-red">Failed</span>',
             logout: '<span class="badge badge-gray">Logout</span>'
         }[event.status] || '<span class="badge">Unknown</span>';
 
-        const roleBadge = `<span class="badge ${RBAC.getBadgeClass(event.access_level)}">${RBAC.getDisplayLabel(event.access_level)}</span>`;
+        const roleBadge = '<span class="badge ' + RBAC.getBadgeClass(event.access_level) + '">' + RBAC.getDisplayLabel(event.access_level) + '</span>';
 
-        return `
-            <tr style="border-bottom: 1px solid #2d2d4e;">
-                <td style="padding: 12px; font-size: 12px; color: #a0aec0;">${formatDateTime(new Date(event.created_at))}</td>
-                <td style="padding: 12px; font-size: 12px; font-weight: 600;">${escapeHtml(event.name || event.email)}</td>
-                <td style="padding: 12px; font-size: 12px; color: #a0aec0;">${escapeHtml(event.email)}</td>
-                <td style="padding: 12px;">${roleBadge}</td>
-                <td style="padding: 12px; font-size: 12px; color: #a0aec0;">${event.event_type}</td>
-                <td style="padding: 12px; font-size: 12px; color: #a0aec0;">${event.device || ''} / ${event.browser || ''}</td>
-                <td style="padding: 12px;">${statusBadge}</td>
-            </tr>
-        `;
+        return '<tr style="border-bottom: 1px solid #2d2d4e;">' +
+            '<td style="padding: 12px; font-size: 12px; color: #a0aec0;">' + formatDateTime(new Date(event.created_at)) + '</td>' +
+            '<td style="padding: 12px; font-size: 12px; font-weight: 600;">' + escapeHtml(event.name || event.email) + '</td>' +
+            '<td style="padding: 12px; font-size: 12px; color: #a0aec0;">' + escapeHtml(event.email) + '</td>' +
+            '<td style="padding: 12px;">' + roleBadge + '</td>' +
+            '<td style="padding: 12px; font-size: 12px; color: #a0aec0;">' + (event.device || '') + ' / ' + (event.browser || '') + '</td>' +
+            '<td style="padding: 12px;">' + statusBadge + '</td>' +
+        '</tr>';
     }).join('');
+
+    updateLoginPagination();
+}
+
+function updateLoginStats(todayEvents) {
+    document.getElementById('totalLoginsToday').textContent = todayEvents.filter(e => e.status === 'success').length;
+    document.getElementById('uniqueUsersToday').textContent = new Set(todayEvents.filter(e => e.status === 'success').map(e => e.email)).size;
+    document.getElementById('failedLoginsToday').textContent = todayEvents.filter(e => e.status === 'failed').length;
+    document.getElementById('activeSessionsNow').textContent = loginHistoryTotal;
+}
+
+function updateLoginPagination() {
+    const totalPages = Math.max(1, Math.ceil(loginHistoryTotal / LOGIN_PAGE_SIZE));
+    document.getElementById('loginPageInfo').textContent = 'Page ' + loginHistoryPage + ' of ' + totalPages + ' (' + loginHistoryTotal + ' total)';
+    document.getElementById('loginPrevBtn').disabled = loginHistoryPage <= 1;
+    document.getElementById('loginNextBtn').disabled = loginHistoryPage >= totalPages;
+}
+
+function loginHistoryPrev() {
+    if (loginHistoryPage > 1) { loginHistoryPage--; loadLoginHistory(); }
+}
+
+function loginHistoryNext() {
+    const totalPages = Math.ceil(loginHistoryTotal / LOGIN_PAGE_SIZE);
+    if (loginHistoryPage < totalPages) { loginHistoryPage++; loadLoginHistory(); }
 }
 
 // ============================================================
@@ -2668,7 +2846,7 @@ async function updateApiKeyStatus() {
     const key = await getClaudeApiKey();
     if (key) {
         const masked = key.substring(0, 10) + '...' + key.substring(key.length - 4);
-        status.innerHTML = `<span style="color: #48bb78;">✓ Key active for all users:</span> <code style="background:#2d2d4e;padding:2px 6px;border-radius:4px;font-size:11px;">${masked}</code>`;
+        status.innerHTML = `<span style="color: #48bb78;">Key active for all users:</span> <code style="background:#2d2d4e;padding:2px 6px;border-radius:4px;font-size:11px;">${masked}</code>`;
     } else {
         status.innerHTML = '<span style="color: #ed8936;">No API key configured.</span> Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: #667eea;">console.anthropic.com</a>';
     }
@@ -2737,7 +2915,7 @@ async function sendAiMessage() {
                 'anthropic-dangerous-direct-browser-access': 'true',
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-opus-4-20250514',
                 max_tokens: 1024,
                 system: `You are the AI Assistant for Horison AIOS (Advanced Internal Operating System), an internal platform for Horison Marketing — an Amazon marketing agency.
 
@@ -2929,11 +3107,11 @@ function renderAutomations() {
                     ${a.description ? `<div style="font-size: 12px; color: #4a5568; margin-top: 6px; padding-left: 30px;">${escapeHtml(a.description).substring(0, 150)}</div>` : ''}
                     <div style="font-size: 11px; color: #4a5568; margin-top: 6px; padding-left: 30px;">
                         Runs: ${a.run_count || 0} · Last: ${a.last_run ? timeAgo(a.last_run) : 'Never'}
-                        ${a.last_status ? ` · <span style="color: ${a.last_status === 'success' ? '#48bb78' : '#fc8181'};">${a.last_status === 'success' ? '✓ Success' : '✗ Failed'}</span>` : ''}
+                        ${a.last_status ? ` · <span style="color: ${a.last_status === 'success' ? '#48bb78' : '#fc8181'};">${a.last_status === 'success' ? 'Success' : 'Failed'}</span>` : ''}
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
-                    <button class="btn btn-sm btn-primary" onclick="runAutomationNow('${a.id}')" ${!a.enabled ? 'disabled' : ''}>▶ Run Now</button>
+                    <button class="btn btn-sm btn-primary" onclick="runAutomationNow('${a.id}')" ${!a.enabled ? 'disabled' : ''}>Run Now</button>
                     <button class="btn btn-sm btn-secondary" onclick="toggleAutomation('${a.id}')">${a.enabled ? 'Pause' : 'Enable'}</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteAutomation('${a.id}')">Delete</button>
                 </div>
@@ -3108,7 +3286,7 @@ async function executeWithClaude(a) {
             'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-opus-4-20250514',
             max_tokens: 1024,
             system: 'You are an automation executor for Horison AIOS (Amazon marketing agency). Execute the automation and provide a real execution report. ' + apiContext + '. Current user: ' + (currentProfile?.name || 'System') + '. Be concise with bullet points.',
             messages: [{
@@ -3131,29 +3309,52 @@ async function clearAutomationLog() {
     showToast('Execution log cleared', 'info');
 }
 
+let autoLogPage = 1; const AUTOLOG_PAGE_SIZE = 10;
+
 function renderAutomationLog() {
     const list = document.getElementById('automationLogList');
     if (automationLogs.length === 0) {
         list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No executions yet. Run an automation to see results here.</p>';
+        updateAutoLogPag();
         return;
     }
 
-    list.innerHTML = automationLogs.slice(0, 20).map(log => `
-        <div style="background: #0f0f1a; padding: 14px 16px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px; border-left: 3px solid ${log.status === 'success' ? '#48bb78' : '#fc8181'};">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px;">${log.status === 'success' ? '[OK]' : '[ERR]'}</span>
-                    <span style="font-weight: 600; font-size: 13px;">${escapeHtml(log.automation_name)}</span>
-                    <span class="badge ${log.status === 'success' ? 'badge-green' : 'badge-red'}" style="font-size: 9px;">${log.status}</span>
-                </div>
-                <div style="font-size: 11px; color: #4a5568;">
-                    ${timeAgo(log.created_at)} · ${log.duration} · by ${escapeHtml(log.run_by)}
-                </div>
-            </div>
-            <pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap; margin: 0; padding: 8px; background: #1a1a2e; border-radius: 6px;">${escapeHtml(log.output)}</pre>
-        </div>
-    `).join('');
+    const start = (autoLogPage - 1) * AUTOLOG_PAGE_SIZE;
+    const page = automationLogs.slice(start, start + AUTOLOG_PAGE_SIZE);
+
+    list.innerHTML = page.map(log => {
+        const statusColor = log.status === 'success' ? '#48bb78' : '#fc8181';
+        const statusLabel = log.status === 'success' ? 'OK' : 'ERR';
+        const badgeClass = log.status === 'success' ? 'badge-green' : 'badge-red';
+        return '<div style="background:#0f0f1a;padding:12px 14px;border-radius:10px;border:1px solid #2d2d4e;margin-bottom:8px;border-left:3px solid ' + statusColor + ';">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<span style="font-size:13px;">' + statusLabel + '</span>' +
+                    '<span style="font-weight:600;font-size:12px;">' + escapeHtml(log.automation_name) + '</span>' +
+                    '<span class="badge ' + badgeClass + '" style="font-size:9px;">' + log.status + '</span>' +
+                '</div>' +
+                '<div style="font-size:10px;color:#4a5568;">' + timeAgo(log.created_at) + ' · ' + (log.duration || '') + ' · by ' + escapeHtml(log.run_by || '') + '</div>' +
+            '</div>' +
+            '<pre style="font-family:inherit;font-size:11px;color:#a0aec0;white-space:pre-wrap;margin:0;padding:6px;background:#1a1a2e;border-radius:6px;">' + escapeHtml(log.output || '') + '</pre>' +
+        '</div>';
+    }).join('');
+
+    updateAutoLogPag();
 }
+
+function updateAutoLogPag() {
+    const total = automationLogs.length;
+    const totalPages = Math.max(1, Math.ceil(total / AUTOLOG_PAGE_SIZE));
+    const info = document.getElementById('autoLogPageInfo');
+    const prev = document.getElementById('autoLogPrevBtn');
+    const next = document.getElementById('autoLogNextBtn');
+    if (info) info.textContent = total > 0 ? 'Page ' + autoLogPage + ' of ' + totalPages + ' (' + total + ' logs)' : '';
+    if (prev) prev.disabled = autoLogPage <= 1;
+    if (next) next.disabled = autoLogPage >= totalPages;
+}
+
+function autoLogPagePrev() { if (autoLogPage > 1) { autoLogPage--; renderAutomationLog(); } }
+function autoLogPageNext() { if (autoLogPage < Math.ceil(automationLogs.length / AUTOLOG_PAGE_SIZE)) { autoLogPage++; renderAutomationLog(); } }
 
 async function toggleAutomation(id) {
     const a = automations.find(x => x.id === id);
@@ -3294,7 +3495,6 @@ function renderToolRequests() {
     list.innerHTML = toolRequests.map(t => `
         <div class="file-item">
             <div class="file-info">
-                <div></div>
                 <div>
                     <div class="file-name">${escapeHtml(t.name)}</div>
                     <div class="file-meta">
@@ -3311,6 +3511,9 @@ function renderToolRequests() {
                 ` : ''}
                 ${t.status === 'approved' && !t.dev_status ? `
                     <span class="badge badge-green" style="font-size: 10px;">Ready for Dev</span>
+                ` : ''}
+                ${(RBAC.isSuperuserOrAdmin(currentProfile) || (currentUser && t.user_id === currentUser.id)) ? `
+                    <button onclick="removeToolRequest('${t.id}')" style="padding:4px 10px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Remove</button>
                 ` : ''}
             </div>
         </div>
@@ -3348,6 +3551,14 @@ async function rejectToolRequest(id) {
     showToast('Tool request rejected', 'info');
 }
 
+async function removeToolRequest(id) {
+    if (!confirm('Remove this tool request? This cannot be undone.')) return;
+    await sb.from('tool_requests').delete().eq('id', id);
+    toolRequests = toolRequests.filter(x => x.id !== id);
+    renderToolRequests();
+    showToast('Tool request removed', 'info');
+}
+
 async function autoBuildTool(tool) {
     const apiKey = await getClaudeApiKey();
 
@@ -3372,7 +3583,7 @@ async function autoBuildTool(tool) {
                 'anthropic-dangerous-direct-browser-access': 'true',
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-opus-4-20250514',
                 max_tokens: 4096,
                 system: `You are a tool builder for Horison AIOS, an internal platform for Horison Marketing (an Amazon marketing agency).
 
@@ -3411,6 +3622,13 @@ Rules:
         // Store the generated tool
         tool.dev_status = 'live';
         tool.generated = toolSpec;
+
+        // Save built tool back to Supabase
+        await sb.from('tool_requests').update({
+            generated: toolSpec,
+            dev_status: 'live',
+            build_status_msg: 'Built by Claude AI'
+        }).eq('id', tool.id);
         tool.build_status_msg = 'Built successfully by Claude';
 
         // Auto-publish to library
@@ -3456,7 +3674,7 @@ async function retryBuildTool(id) {
 const devStages = ['spec', 'development', 'testing', 'live'];
 const devStageLabels = { spec: 'Spec / Planning', development: 'In Development', testing: 'Testing / QA', live: 'Live' };
 const devStageColors = { spec: 'badge-yellow', development: 'badge-blue', testing: 'badge-green', live: 'badge-green' };
-const devStageIcons = { spec: '[S]', development: '[D]', testing: '[T]', live: '[L]' };
+const devStageIcons = { spec: '', development: '', testing: '', live: '' };
 
 function renderDevQueue() {
     const list = document.getElementById('devQueueList');
@@ -3478,7 +3696,7 @@ function renderDevQueue() {
                         <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">${escapeHtml(t.name)}</div>
                         <div style="font-size: 12px; color: #718096;">Requested by ${escapeHtml(t.requested_by)} · Approved by ${escapeHtml(t.approved_by || '—')}</div>
                     </div>
-                    <span class="badge ${devStageColors[t.dev_status]}">${devStageIcons[t.dev_status]} ${devStageLabels[t.dev_status]}</span>
+                    <span class="badge ${devStageColors[t.dev_status]}">${devStageLabels[t.dev_status]}</span>
                 </div>
 
                 <!-- Progress Bar -->
@@ -3490,15 +3708,15 @@ function renderDevQueue() {
                 <div style="display: flex; justify-content: space-between; margin-bottom: 14px;">
                     ${devStages.map((stage, i) => `
                         <div style="text-align: center; flex: 1;">
-                            <div style="font-size: 16px; margin-bottom: 4px; opacity: ${i <= stageIndex ? '1' : '0.3'};">${devStageIcons[stage]}</div>
-                            <div style="font-size: 10px; color: ${i <= stageIndex ? '#e2e8f0' : '#4a5568'}; font-weight: ${i === stageIndex ? '700' : '400'};">${devStageLabels[stage]}</div>
+                            
+                            <div style="font-size: 12px; color: ${i <= stageIndex ? '#e2e8f0' : '#4a5568'}; font-weight: ${i === stageIndex ? '700' : '400'};">${devStageLabels[stage]}</div>
                         </div>
                     `).join('')}
                 </div>
 
                 ${t.build_status_msg ? `
                     <div style="font-size: 12px; color: ${t.build_error ? '#fc8181' : '#48bb78'}; margin-bottom: 10px; padding: 8px 12px; background: ${t.build_error ? 'rgba(252,129,129,0.08)' : 'rgba(72,187,120,0.08)'}; border-radius: 6px;">
-                        ${t.build_error ? '[!]' : '[OK]'} ${escapeHtml(t.build_status_msg)}
+                        ${t.build_error ? '!' : 'OK'} ${escapeHtml(t.build_status_msg)}
                     </div>
                 ` : ''}
 
@@ -3507,11 +3725,11 @@ function renderDevQueue() {
                         ${t.build_error ? `
                             <button class="btn btn-sm btn-primary" onclick="retryBuildTool(${t.id})">Rebuild with Claude</button>
                         ` : t.dev_status !== 'live' && t.dev_status !== 'published' ? `
-                            <button class="btn btn-sm btn-primary" onclick="advanceDevStage(${t.id})">Advance to Next Stage →</button>
+                            <button class="btn btn-sm btn-primary" onclick="advanceDevStage(${t.id})">Advance to Next Stage</button>
                         ` : t.dev_status === 'live' ? `
                             <button class="btn btn-sm btn-primary" onclick="publishToLibrary(${t.id})">Publish to Library</button>
                         ` : ''}
-                        ${t.dev_status !== 'published' ? `<button class="btn btn-sm btn-secondary" onclick="regressDevStage(${t.id})">← Previous Stage</button>` : ''}
+                        ${t.dev_status !== 'published' ? `<button class="btn btn-sm btn-secondary" onclick="regressDevStage(${t.id})">Previous Stage</button>` : ''}
                     </div>
                 ` : ''}
             </div>
@@ -3583,7 +3801,7 @@ function renderToolLibrary() {
                     <span class="badge badge-blue" style="font-size: 10px;">${t.dept}</span>
                     <div style="display: flex; align-items: center; gap: 6px;">
                         ${t.generated ? '<span class="badge badge-yellow" style="font-size: 9px;">AI Built</span>' : ''}
-                        <span style="font-size: 11px; color: #48bb78; font-weight: 600;">▶ Run</span>
+                        <span style="font-size: 11px; color: #48bb78; font-weight: 600;">Run</span>
                     </div>
                 </div>
             </div>
@@ -3950,6 +4168,20 @@ async function saveCustomApi() {
     showToast(name + ' added to API Hub!', 'success');
 }
 
+async function disconnectApi(apiId) {
+    if (!RBAC.isSuperuserOrAdmin(currentProfile)) return;
+    const api = API_INTEGRATIONS.find(a => a.id === apiId);
+    if (!confirm('Disconnect ' + (api?.name || apiId) + '? This will remove all stored credentials.')) return;
+
+    const configKey = 'api_' + apiId;
+    await sb.from('app_settings').delete().eq('key', configKey);
+    delete apiConfigs[configKey];
+
+    document.getElementById('apiConfigPanel').style.display = 'none';
+    renderApiHub();
+    showToast((api?.name || 'API') + ' disconnected', 'info');
+}
+
 async function removeCustomApi(apiId) {
     if (!RBAC.isSuperuserOrAdmin(currentProfile)) return;
     if (!confirm('Remove this API integration? This will also delete its stored credentials.')) return;
@@ -3993,7 +4225,13 @@ function renderApiHub() {
         if (hasAllFields) buttons += '<button class="btn btn-sm btn-secondary" onclick="testApiConnection(' + q + api.id + q + ')">Test</button> ';
         if (isAdmin) buttons += '<button class="btn btn-sm btn-primary" onclick="openApiConfig(' + q + api.id + q + ')">' + (isConnected ? 'Configure' : 'Connect') + '</button> ';
         if (api.docs && api.docs !== '#') buttons += '<a href="' + api.docs + '" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration:none;">Docs</a> ';
-        if (api.custom && isAdmin) buttons += '<button class="btn btn-sm btn-danger" onclick="removeCustomApi(' + q + api.id + q + ')">Remove</button>';
+        if (isAdmin) {
+            if (api.custom) {
+                buttons += '<button onclick="removeCustomApi(' + q + api.id + q + ')" style="padding:4px 10px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Remove</button>';
+            } else {
+                buttons += '<button onclick="disconnectApi(' + q + api.id + q + ')" style="padding:4px 10px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">' + (isConnected ? 'Disconnect' : 'Remove') + '</button>';
+            }
+        }
 
         const customBadge = api.custom ? ' <span class="badge badge-blue" style="font-size:9px;margin-left:6px;">Custom</span>' : '';
         const statusClass = hasAllFields ? 'badge-green' : isConnected ? 'badge-yellow' : 'badge-gray';
@@ -4180,6 +4418,23 @@ async function testApiConnection(apiId) {
 }
 
 // ============================================================
+// SHARED PAGINATION HELPER
+// ============================================================
+function updatePag(prefix, total) {
+    const sizes = { doc: DOC_PAGE_SIZE, tpl: TPL_PAGE_SIZE, storage: STORAGE_PAGE_SIZE };
+    const pages = { doc: docPage, tpl: tplPage, storage: storagePage };
+    const size = sizes[prefix] || 10;
+    const page = pages[prefix] || 1;
+    const totalPages = Math.max(1, Math.ceil(total / size));
+    const info = document.getElementById(prefix + 'PageInfo');
+    const prev = document.getElementById(prefix + 'PrevBtn');
+    const next = document.getElementById(prefix + 'NextBtn');
+    if (info) info.textContent = total > 0 ? 'Page ' + page + ' of ' + totalPages + ' (' + total + ' total)' : '';
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= totalPages;
+}
+
+// ============================================================
 // INITIALIZE
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -4212,7 +4467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 console.log('Horison AIOS - Ready');
-console.log('✓ Auth, Database, Storage & RBAC connected');
+console.log('Auth, Database, Storage & RBAC connected');
 </script>
 
 </body>
