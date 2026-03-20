@@ -2097,7 +2097,10 @@ async function saveDocument(event) {
 async function deleteDocument(id) {
     if (!RBAC.can(currentProfile, 'action:delete-document')) { showToast('Access denied.', 'error'); return; }
     if (!confirm('Delete this document?')) return;
-    await sb.from('documents').delete().eq('id', id);
+
+    const { error } = await sb.from('documents').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+
     await loadDocuments();
     await updateStats();
     showToast('Document deleted', 'info');
@@ -2168,7 +2171,10 @@ async function saveTemplate(event) {
 async function deleteTemplate(id) {
     if (!RBAC.can(currentProfile, 'action:delete-template')) { showToast('Access denied.', 'error'); return; }
     if (!confirm('Delete this template?')) return;
-    await sb.from('templates').delete().eq('id', id);
+
+    const { error } = await sb.from('templates').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+
     await loadTemplates();
     await updateStats();
     showToast('Template deleted', 'info');
@@ -2497,20 +2503,17 @@ async function clearLoginHistory() {
     if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can clear history', 'error'); return; }
     if (!confirm('Are you sure you want to delete ALL login history? This cannot be undone.')) return;
 
-    // Fetch all IDs first, then delete in batches
     const { data: allLogs } = await sb.from('login_history').select('id');
     if (allLogs && allLogs.length > 0) {
-        const ids = allLogs.map(l => l.id);
-        // Delete in chunks of 50
-        for (let i = 0; i < ids.length; i += 50) {
-            const chunk = ids.slice(i, i + 50);
-            await sb.from('login_history').delete().in('id', chunk);
+        for (const log of allLogs) {
+            const { error } = await sb.from('login_history').delete().eq('id', log.id);
+            if (error) { showToast('Delete failed: ' + error.message + '. Check Supabase RLS policies.', 'error'); return; }
         }
     }
 
     showToast('Login history cleared (' + (allLogs?.length || 0) + ' records deleted)', 'success');
     loginHistoryPage = 1;
-    loadLoginHistory();
+    await loadLoginHistory();
 }
 
 let loginHistoryPage = 1;
@@ -3303,10 +3306,18 @@ async function executeWithClaude(a) {
 
 async function clearAutomationLog() {
     if (!confirm('Clear all execution logs?')) return;
-    await sb.from('automation_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+    const { data: allLogs } = await sb.from('automation_logs').select('id');
+    if (allLogs && allLogs.length > 0) {
+        for (const log of allLogs) {
+            const { error } = await sb.from('automation_logs').delete().eq('id', log.id);
+            if (error) { showToast('Delete failed: ' + error.message + '. Check Supabase RLS policies.', 'error'); return; }
+        }
+    }
+
     automationLogs = [];
     renderAutomationLog();
-    showToast('Execution log cleared', 'info');
+    showToast('Execution log cleared (' + (allLogs?.length || 0) + ' logs)', 'info');
 }
 
 let autoLogPage = 1; const AUTOLOG_PAGE_SIZE = 10;
@@ -3367,12 +3378,19 @@ async function toggleAutomation(id) {
 
 async function deleteAutomation(id) {
     if (!confirm('Delete this automation and all its logs?')) return;
-    await sb.from('automation_logs').delete().eq('automation_id', id);
-    await sb.from('automations').delete().eq('id', id);
-    automations = automations.filter(x => x.id !== id);
-    automationLogs = automationLogs.filter(l => l.automation_id !== id);
-    renderAutomations();
-    renderAutomationLog();
+
+    // Delete related logs first
+    const { data: relatedLogs } = await sb.from('automation_logs').select('id').eq('automation_id', id);
+    if (relatedLogs) {
+        for (const log of relatedLogs) {
+            await sb.from('automation_logs').delete().eq('id', log.id);
+        }
+    }
+
+    const { error } = await sb.from('automations').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message + '. Check Supabase RLS policies.', 'error'); return; }
+
+    await loadAutomations();
     showToast('Automation and logs deleted', 'info');
 }
 
@@ -3544,18 +3562,21 @@ async function approveToolRequest(id) {
 
 async function rejectToolRequest(id) {
     if (!RBAC.isSuperuserOrAdmin(currentProfile)) { showToast('Only admins can reject tools', 'error'); return; }
-    await sb.from('tool_requests').update({ status: 'rejected' }).eq('id', id);
-    const t = toolRequests.find(x => x.id === id);
-    if (t) t.status = 'rejected';
-    renderToolRequests();
+
+    const { error } = await sb.from('tool_requests').update({ status: 'rejected' }).eq('id', id);
+    if (error) { showToast('Reject failed: ' + error.message, 'error'); return; }
+
+    await loadToolRequests();
     showToast('Tool request rejected', 'info');
 }
 
 async function removeToolRequest(id) {
     if (!confirm('Remove this tool request? This cannot be undone.')) return;
-    await sb.from('tool_requests').delete().eq('id', id);
-    toolRequests = toolRequests.filter(x => x.id !== id);
-    renderToolRequests();
+
+    const { error } = await sb.from('tool_requests').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message + '. Check Supabase RLS policies.', 'error'); return; }
+
+    await loadToolRequests();
     showToast('Tool request removed', 'info');
 }
 
