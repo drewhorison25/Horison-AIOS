@@ -805,8 +805,8 @@
             <div class="nav-section">INTELLIGENCE</div>
             <div class="nav-item" data-page="comms-os" onclick="showPage('comms-os')">Communication OS</div>
             <div class="nav-item" data-page="meeting-intel" onclick="showPage('meeting-intel')">Meeting Intelligence</div>
-            <div class="nav-item" data-page="daily-brief" onclick="showPage('daily-brief')">Daily Brief</div>
-            <div class="nav-item" data-page="sop-engine" onclick="showPage('sop-engine')">SOP Automation</div>
+            <div class="nav-item" data-page="daily-brief" id="navDailyBrief" style="display: none;" onclick="showPage('daily-brief')">Daily Brief</div>
+            <div class="nav-item" data-page="sop-engine" id="navSopEngine" style="display: none;" onclick="showPage('sop-engine')">SOP Automation</div>
         </nav>
     </div>
 
@@ -1406,7 +1406,7 @@
                         <div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">
                             <div style="font-weight: 600; margin-bottom: 8px;">Slack</div>
                             <div style="font-size: 12px; color: #718096; margin-bottom: 12px;">Channel monitoring, activity summaries, urgent message routing</div>
-                            <span class="badge badge-green" id="commsSlackStatus">Checking...</span>
+                            <span class="badge badge-gray" id="commsSlackStatus">Not Checked</span>
                         </div>
                         <div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">
                             <div style="font-weight: 600; margin-bottom: 8px;">Gmail</div>
@@ -2159,6 +2159,8 @@ function showApp() {
     // Legacy nav IDs (admin-only pages)
     document.getElementById('navUserMgmt').style.display = RBAC.can(currentProfile, 'page:user-management') ? 'flex' : 'none';
     document.getElementById('navLoginHistory').style.display = RBAC.can(currentProfile, 'page:login-history') ? 'flex' : 'none';
+    document.getElementById('navDailyBrief').style.display = RBAC.can(currentProfile, 'page:daily-brief') ? 'flex' : 'none';
+    document.getElementById('navSopEngine').style.display = RBAC.can(currentProfile, 'page:sop-engine') ? 'flex' : 'none';
 
     // Hide "My Team" nav for regular users (not managers)
     const teamNav = document.getElementById('navTeam');
@@ -2811,6 +2813,8 @@ function showPage(pageId) {
     if (pageId === 'api-hub') loadApiConfigs();
     if (pageId === 'sop-engine') renderSopWorkflows();
     if (pageId === 'meeting-intel') renderMeetingArchive();
+    if (pageId === 'comms-os') updateCommsStatus();
+    if (pageId === 'daily-brief') renderBriefHistory();
 }
 
 function toggleForms() {
@@ -4614,6 +4618,20 @@ async function testApiConnection(apiId) {
 // ============================================================
 // PHASE 3: COMMUNICATION OS
 // ============================================================
+function updateCommsStatus() {
+    const slackConfig = apiConfigs['api_slack'];
+    const el = document.getElementById('commsSlackStatus');
+    if (el) {
+        el.textContent = slackConfig?.bot_token ? 'Connected' : 'Not Connected';
+        el.className = 'badge ' + (slackConfig?.bot_token ? 'badge-green' : 'badge-gray');
+    }
+    const gmailEl = document.getElementById('commsGmailStatus');
+    if (gmailEl) {
+        gmailEl.textContent = apiConfigs['api_gmail'] ? 'Connected' : 'Connect in API Hub';
+        gmailEl.className = 'badge ' + (apiConfigs['api_gmail'] ? 'badge-green' : 'badge-yellow');
+    }
+}
+
 async function generateCommsBrief() {
     const output = document.getElementById('commsBriefOutput');
     output.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Generating morning brief...</p>';
@@ -4820,13 +4838,12 @@ let sopLogs = [];
 
 function renderSopWorkflows() {
     const list = document.getElementById('sopWorkflowsList');
-    const q = "'";
     list.innerHTML = sopWorkflows.map(sop =>
         '<div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">' +
             '<div style="font-weight: 600; margin-bottom: 6px;">' + escapeHtml(sop.name) + '</div>' +
             '<div style="font-size: 12px; color: #718096; margin-bottom: 12px;">' + escapeHtml(sop.description) + '</div>' +
-            '<div style="display: flex; gap: 8px;">' +
-                '<button class="btn btn-sm btn-primary" onclick="executeSop(' + q + sop.id + q + ')">Execute</button>' +
+            '<div style="display: flex; gap: 8px; align-items: center;">' +
+                '<button class="btn btn-sm btn-primary" onclick="executeSop(\'' + sop.id + '\')">Execute</button>' +
                 '<span class="badge badge-blue" style="font-size: 9px;">' + escapeHtml(sop.category) + '</span>' +
             '</div>' +
         '</div>'
