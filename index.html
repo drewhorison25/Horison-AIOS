@@ -1416,7 +1416,7 @@
                         <div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">
                             <div style="font-weight: 600; margin-bottom: 8px;">WhatsApp</div>
                             <div style="font-size: 12px; color: #718096; margin-bottom: 12px;">Client message monitoring, response suggestions</div>
-                            <span class="badge badge-gray" id="commsWhatsappStatus">Coming in Phase 5</span>
+                            <span class="badge badge-gray" id="commsWhatsappStatus">Not Connected</span>
                         </div>
                     </div>
 
@@ -2046,12 +2046,12 @@ async function handleForgotPassword() {
 async function handleChangePassword() {
     const newPass = prompt('Enter your new password (min 6 characters):');
     if (!newPass || newPass.length < 6) {
-        alert('Password must be at least 6 characters.');
+        showToast('Password must be at least 6 characters.', 'error');
         return;
     }
     const { error } = await sb.auth.updateUser({ password: newPass });
     if (error) {
-        alert('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
     } else {
         showToast('Password updated successfully!', 'success');
         closeSettings();
@@ -2166,8 +2166,7 @@ function showApp() {
     const teamNav = document.getElementById('navTeam');
     if (teamNav) teamNav.style.display = RBAC.can(currentProfile, 'action:view-team') ? 'flex' : 'none';
 
-    console.log(`RBAC: ${currentProfile?.email} → ${currentProfile?.access_level} (${RBAC.getDisplayLabel(currentProfile?.access_level)})`);
-
+    
     // Load all data
     loadAllData();
 }
@@ -2573,12 +2572,12 @@ function teamPageNext() {
 }
 
 async function changeUserRole(userId) {
-    if (!RBAC.can(currentProfile, 'action:change-role')) { alert('Access denied.'); return; }
+    if (!RBAC.can(currentProfile, 'action:change-role')) { showToast('Access denied.', 'error'); return; }
 
     const options = RBAC.allLevels.join('\n- ');
     const newLevel = prompt('Enter new access level:\n\n- ' + options + '\n\nFormat: primary-sub');
     if (!newLevel || !RBAC.allLevels.includes(newLevel)) {
-        if (newLevel) alert('Invalid access level. Must be one of: ' + RBAC.allLevels.join(', '));
+        if (newLevel) showToast('Invalid access level. Must be one of: ' + RBAC.allLevels.join(', '), 'error');
         return;
     }
 
@@ -2606,7 +2605,7 @@ async function removeUser(userId, userName) {
 // ============================================================
 async function adminCreateUser(event) {
     event.preventDefault();
-    if (!RBAC.can(currentProfile, 'action:create-user')) { alert('Access denied. Only admins can create users.'); return false; }
+    if (!RBAC.can(currentProfile, 'action:create-user')) { showToast('Access denied. Only admins can create users.', 'error'); return false; }
 
     const name = document.getElementById('adminUserName').value.trim();
     const email = document.getElementById('adminUserEmail').value.trim();
@@ -2878,7 +2877,7 @@ document.addEventListener('click', (e) => {
 function viewProfile() {
     closeSettings();
     const level = RBAC.parse(currentProfile?.access_level);
-    alert(`Profile Information:\n\nName: ${currentProfile?.name}\nEmail: ${currentUser?.email}\nAccess Level: ${RBAC.getDisplayLabel(currentProfile?.access_level)}\nPrimary: ${level.primary}\nSub-Level: ${level.sub}\nRaw: ${level.raw}\nDepartment: ${currentProfile?.dept}\n\nData stored in Supabase cloud.`);
+    showToast('Profile: ' + (currentProfile?.name || '') + ' | ' + (currentUser?.email || '') + ' | ' + RBAC.getDisplayLabel(currentProfile?.access_level) + ' | ' + (currentProfile?.dept || ''), 'info');
 }
 
 async function exportData() {
@@ -3872,7 +3871,6 @@ async function retryBuildTool(id) {
 const devStages = ['spec', 'development', 'testing', 'live'];
 const devStageLabels = { spec: 'Spec / Planning', development: 'In Development', testing: 'Testing / QA', live: 'Live' };
 const devStageColors = { spec: 'badge-yellow', development: 'badge-blue', testing: 'badge-green', live: 'badge-green' };
-const devStageIcons = { spec: '', development: '', testing: '', live: '' };
 
 function renderDevQueue() {
     const list = document.getElementById('devQueueList');
@@ -4742,17 +4740,48 @@ function renderMeetingArchive() {
         list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No meetings analyzed yet.</p>';
         return;
     }
-    list.innerHTML = meetingArchive.map(m =>
-        '<div style="background: #0f0f1a; padding: 12px 16px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px; cursor: pointer;" onclick="this.querySelector(\'.meeting-detail\').style.display = this.querySelector(\'.meeting-detail\').style.display === \'none\' ? \'block\' : \'none\'">' +
+    list.innerHTML = meetingArchive.map((m, idx) =>
+        '<div style="background: #0f0f1a; padding: 12px 16px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px;">' +
             '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                '<div><span style="font-weight: 600; font-size: 13px;">' + escapeHtml(m.title) + '</span> <span style="font-size: 11px; color: #718096;">· ' + escapeHtml(m.attendees) + ' · ' + timeAgo(m.created_at) + '</span></div>' +
-                '<span style="font-size: 11px; color: #667eea;">Click to expand</span>' +
+                '<div style="cursor: pointer; flex: 1;" onclick="toggleMeetingDetail(' + idx + ')">' +
+                    '<span style="font-weight: 600; font-size: 13px;">' + escapeHtml(m.title) + '</span>' +
+                    ' <span style="font-size: 11px; color: #718096;">\xb7 ' + escapeHtml(m.attendees) + ' \xb7 ' + timeAgo(m.created_at) + '</span>' +
+                '</div>' +
+                '<div style="display: flex; gap: 6px; align-items: center;">' +
+                    '<button onclick="editMeeting(' + idx + ')" style="padding:3px 8px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Edit</button>' +
+                    '<button onclick="removeMeeting(' + idx + ')" style="padding:3px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Remove</button>' +
+                '</div>' +
             '</div>' +
-            '<div class="meeting-detail" style="display: none; margin-top: 12px;">' +
+            '<div id="meetingDetail' + idx + '" style="display: none; margin-top: 12px;">' +
                 '<pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap; line-height: 1.6;">' + escapeHtml(m.analysis) + '</pre>' +
             '</div>' +
         '</div>'
     ).join('');
+}
+
+function toggleMeetingDetail(idx) {
+    const el = document.getElementById('meetingDetail' + idx);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function removeMeeting(idx) {
+    if (!confirm('Remove this meeting from archive?')) return;
+    meetingArchive.splice(idx, 1);
+    renderMeetingArchive();
+    showToast('Meeting removed', 'info');
+}
+
+function editMeeting(idx) {
+    const m = meetingArchive[idx];
+    if (!m) return;
+    const newTitle = prompt('Edit meeting title:', m.title);
+    if (newTitle === null) return;
+    const newAttendees = prompt('Edit attendees:', m.attendees);
+    if (newAttendees === null) return;
+    m.title = newTitle.trim() || m.title;
+    m.attendees = newAttendees.trim() || m.attendees;
+    renderMeetingArchive();
+    showToast('Meeting updated', 'success');
 }
 
 // ============================================================
@@ -4816,12 +4845,31 @@ async function generateDailyBrief() {
 function renderBriefHistory() {
     const list = document.getElementById('dailyBriefHistory');
     if (dailyBriefs.length <= 1) { list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Previous briefs will appear here.</p>'; return; }
-    list.innerHTML = dailyBriefs.slice(1).map(b =>
-        '<div style="background: #0f0f1a; padding: 10px 14px; border-radius: 8px; border: 1px solid #2d2d4e; margin-bottom: 8px; cursor: pointer;" onclick="this.querySelector(\'.brief-detail\').style.display = this.querySelector(\'.brief-detail\').style.display === \'none\' ? \'block\' : \'none\'">' +
-            '<div style="display: flex; justify-content: space-between;"><span style="font-weight: 600; font-size: 12px;">Daily Brief</span><span style="font-size: 11px; color: #718096;">' + timeAgo(b.date) + '</span></div>' +
-            '<div class="brief-detail" style="display: none; margin-top: 10px;"><pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap;">' + escapeHtml(b.text) + '</pre></div>' +
-        '</div>'
-    ).join('');
+    list.innerHTML = dailyBriefs.slice(1).map((b, idx) => {
+        const realIdx = idx + 1;
+        return '<div style="background: #0f0f1a; padding: 10px 14px; border-radius: 8px; border: 1px solid #2d2d4e; margin-bottom: 8px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                '<div style="cursor: pointer; flex: 1;" onclick="toggleBriefDetail(' + realIdx + ')">' +
+                    '<span style="font-weight: 600; font-size: 12px;">Daily Brief</span>' +
+                    ' <span style="font-size: 11px; color: #718096;">' + timeAgo(b.date) + '</span>' +
+                '</div>' +
+                '<button onclick="removeBrief(' + realIdx + ')" style="padding:3px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Remove</button>' +
+            '</div>' +
+            '<div id="briefDetail' + realIdx + '" style="display: none; margin-top: 10px;"><pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap;">' + escapeHtml(b.text) + '</pre></div>' +
+        '</div>';
+    }).join('');
+}
+
+function toggleBriefDetail(idx) {
+    const el = document.getElementById('briefDetail' + idx);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function removeBrief(idx) {
+    if (!confirm('Remove this brief from history?')) return;
+    dailyBriefs.splice(idx, 1);
+    renderBriefHistory();
+    showToast('Brief removed', 'info');
 }
 
 // ============================================================
@@ -4838,16 +4886,45 @@ let sopLogs = [];
 
 function renderSopWorkflows() {
     const list = document.getElementById('sopWorkflowsList');
-    list.innerHTML = sopWorkflows.map(sop =>
-        '<div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">' +
-            '<div style="font-weight: 600; margin-bottom: 6px;">' + escapeHtml(sop.name) + '</div>' +
+    list.innerHTML = sopWorkflows.map((sop, idx) => {
+        const isCustom = sop.id.startsWith('custom_');
+        return '<div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">' +
+                '<div style="font-weight: 600;">' + escapeHtml(sop.name) + (isCustom ? ' <span style="font-size:9px;color:#667eea;font-weight:400;">(Custom)</span>' : '') + '</div>' +
+                (isCustom ? '<div style="display:flex;gap:4px;">' +
+                    '<button onclick="editSopWorkflow(' + idx + ')" style="padding:2px 6px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Edit</button>' +
+                    '<button onclick="removeSopWorkflow(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' +
+                '</div>' : '') +
+            '</div>' +
             '<div style="font-size: 12px; color: #718096; margin-bottom: 12px;">' + escapeHtml(sop.description) + '</div>' +
             '<div style="display: flex; gap: 8px; align-items: center;">' +
                 '<button class="btn btn-sm btn-primary" onclick="executeSop(\'' + sop.id + '\')">Execute</button>' +
                 '<span class="badge badge-blue" style="font-size: 9px;">' + escapeHtml(sop.category) + '</span>' +
             '</div>' +
-        '</div>'
-    ).join('');
+        '</div>';
+    }).join('');
+}
+
+function editSopWorkflow(idx) {
+    const sop = sopWorkflows[idx];
+    if (!sop) return;
+    const newName = prompt('Edit SOP name:', sop.name);
+    if (newName === null) return;
+    const newDesc = prompt('Edit description:', sop.description);
+    if (newDesc === null) return;
+    sop.name = newName.trim() || sop.name;
+    sop.description = newDesc.trim() || sop.description;
+    renderSopWorkflows();
+    showToast('SOP workflow updated', 'success');
+}
+
+function removeSopWorkflow(idx) {
+    const sop = sopWorkflows[idx];
+    if (!sop || !sop.id.startsWith('custom_')) { showToast('Cannot remove built-in SOPs', 'error'); return; }
+    if (!confirm('Remove "' + sop.name + '" workflow?')) return;
+    sopWorkflows.splice(idx, 1);
+    renderSopWorkflows();
+    showToast('SOP workflow removed', 'info');
 }
 
 function openCreateSopWorkflow() {
@@ -4905,15 +4982,34 @@ async function executeSop(sopId) {
 function renderSopLog() {
     const list = document.getElementById('sopExecutionLog');
     if (sopLogs.length === 0) { list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No SOP workflows executed yet.</p>'; return; }
-    list.innerHTML = sopLogs.slice(0, 10).map(log =>
+    let html = '<div style="display: flex; justify-content: flex-end; margin-bottom: 8px;"><button onclick="clearSopLog()" style="padding:4px 10px;background:rgba(252,129,129,0.12);color:#fc8181;border:1px solid rgba(252,129,129,0.25);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Clear All Logs</button></div>';
+    html += sopLogs.slice(0, 10).map((log, idx) =>
         '<div style="background: #0f0f1a; padding: 12px 14px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px; border-left: 3px solid ' + (log.status === 'success' ? '#48bb78' : '#fc8181') + ';">' +
             '<div style="display: flex; justify-content: space-between; margin-bottom: 6px;">' +
                 '<span style="font-weight: 600; font-size: 12px;">' + escapeHtml(log.sop_name) + ' <span class="badge ' + (log.status === 'success' ? 'badge-green' : 'badge-red') + '" style="font-size: 9px;">' + log.status + '</span></span>' +
-                '<span style="font-size: 10px; color: #4a5568;">' + log.duration + ' · ' + escapeHtml(log.run_by) + ' · ' + timeAgo(log.created_at) + '</span>' +
+                '<div style="display:flex;gap:6px;align-items:center;">' +
+                    '<span style="font-size: 10px; color: #4a5568;">' + log.duration + ' \xb7 ' + escapeHtml(log.run_by) + ' \xb7 ' + timeAgo(log.created_at) + '</span>' +
+                    '<button onclick="removeSopLog(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' +
+                '</div>' +
             '</div>' +
             '<pre style="font-family: inherit; font-size: 11px; color: #a0aec0; white-space: pre-wrap; max-height: 150px; overflow-y: auto;">' + escapeHtml(log.output) + '</pre>' +
         '</div>'
     ).join('');
+    list.innerHTML = html;
+}
+
+function removeSopLog(idx) {
+    if (!confirm('Remove this log entry?')) return;
+    sopLogs.splice(idx, 1);
+    renderSopLog();
+    showToast('Log entry removed', 'info');
+}
+
+function clearSopLog() {
+    if (!confirm('Clear all SOP execution logs?')) return;
+    sopLogs = [];
+    renderSopLog();
+    showToast('SOP logs cleared', 'info');
 }
 
 // ============================================================
@@ -4965,8 +5061,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-console.log('Horison AIOS - Ready');
-console.log('Auth, Database, Storage & RBAC connected');
 </script>
 
 </body>
