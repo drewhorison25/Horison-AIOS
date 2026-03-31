@@ -1550,124 +1550,104 @@
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- PHASE 4: PERFORMANCE, TRAINING & AI ASSISTANTS                -->
-<!-- ============================================================ -->
-
-<!-- PERFORMANCE OS PAGE -->
-<div class="page" id="page-performance-os" style="display: none;">
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div>
-                <div class="card-title" style="margin: 0;">Performance OS</div>
-                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Automated KPI tracking and AI coaching tailored to each role.</p>
-            </div>
-            <button class="btn btn-primary" onclick="generatePerformanceReport()">Generate My Report</button>
-        </div>
-
-        <!-- Role KPI Cards -->
-        <div class="card-title">Role KPI Matrix</div>
-        <div style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; margin-bottom: 20px;" id="perfRoleCards"></div>
-
-        <!-- My Performance Report -->
-        <div class="card-title">My Performance Report</div>
-        <div id="perfReportOutput" style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e; min-height: 80px;">
-            <p style="color: #718096; text-align: center; padding: 20px;">Click "Generate My Report" to get your personalized KPI analysis and coaching from Claude AI.</p>
-        </div>
-
-        <!-- Report History -->
-        <div class="card-title" style="margin-top: 20px;">Report History</div>
-        <div id="perfReportHistory">
-            <p style="color: #718096; text-align: center; padding: 20px;">No reports generated yet.</p>
-        </div>
-    </div>
-</div>
-
-<!-- TRAINING HUB PAGE -->
-<div class="page" id="page-training-hub" style="display: none;">
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div>
-                <div class="card-title" style="margin: 0;">Training Hub</div>
-                <p style="color: #718096; font-size: 13px; margin-top: 4px;">Structured onboarding paths, SOPs, skill assessments, and AI tutor.</p>
-            </div>
-            <button class="btn btn-primary" onclick="openAddTrainingModule()">+ Add Module</button>
-        </div>
-
-        <!-- Onboarding Paths -->
-        <div class="card-title">Onboarding Paths</div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;" id="trainingPathsList"></div>
-
-        <!-- Add Module Form -->
-        <div class="card" id="addTrainingModuleCard" style="display: none; margin-bottom: 16px;">
-            <div class="card-title">Add Training Module</div>
-            <div class="form-group">
-                <label class="form-label">Module Name</label>
-                <input type="text" class="form-control" id="trainingModuleName" placeholder="e.g. PPC Campaign Setup 101">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Role</label>
-                <select class="form-control" id="trainingModuleRole">
-                    <option value="ppc-analyst">PPC Analyst</option>
-                    <option value="account-manager">Account Manager</option>
-                    <option value="listing-specialist">Listing Specialist</option>
-                    <option value="sales-rep">Sales Rep</option>
-                    <option value="operations">Operations</option>
-                    <option value="all">All Roles</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Content / SOP Steps</label>
-                <textarea class="form-control" id="trainingModuleContent" rows="4" placeholder="Describe the training steps or paste SOP content..." style="resize: vertical;"></textarea>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Video URL (optional)</label>
-                <input type="text" class="form-control" id="trainingModuleVideo" placeholder="https://www.loom.com/share/...">
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="saveTrainingModule()">Save Module</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('addTrainingModuleCard').style.display='none'">Cancel</button>
-            </div>
-        </div>
-
-        <!-- AI Tutor -->
-        <div class="card-title" style="margin-top: 20px;">AI Tutor</div>
-        <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e;">
-            <p style="color: #718096; font-size: 12px; margin-bottom: 10px;">Ask any question about Horison SOPs, processes, or workflows.</p>
-            <div style="display: flex; gap: 8px;">
-                <input type="text" class="form-control" id="aiTutorInput" placeholder="e.g. How do I set up a new PPC campaign for a client?" style="flex: 1;">
-                <button class="btn btn-primary" onclick="askAiTutor()">Ask</button>
-            </div>
-            <div id="aiTutorOutput" style="margin-top: 12px;"></div>
-        </div>
-    </div>
-</div>
-
-<!-- AI ASSISTANTS PAGE -->
-<div class="page" id="page-ai-assistants" style="display: none;">
-    <div class="card">
-        <div class="card-title">Role-Specific AI Assistants</div>
-        <p style="color: #718096; font-size: 13px; margin-bottom: 20px;">Purpose-built AI assistants for each department. Select an assistant and describe your task.</p>
-
-        <!-- Assistant Cards -->
-        <div style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 12px; margin-bottom: 20px;" id="aiAssistantsList"></div>
-
-        <!-- Active Assistant Chat -->
-        <div id="assistantChatPanel" style="display: none;">
-            <div class="card-title" id="activeAssistantName">Assistant</div>
-            <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e;">
-                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <input type="text" class="form-control" id="assistantChatInput" placeholder="Describe your task..." style="flex: 1;">
-                    <button class="btn btn-primary" onclick="sendToAssistant()">Send</button>
-                </div>
-                <div id="assistantChatOutput" style="min-height: 80px;">
-                    <p style="color: #718096; text-align: center; padding: 16px;">Select an assistant above, then describe your task.</p>
+            <!-- PHASE 4: PERFORMANCE OS -->
+            <div class="page" id="page-performance-os">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <div class="card-title" style="margin: 0;">Performance OS</div>
+                            <p style="color: #718096; font-size: 13px; margin-top: 4px;">Automated KPI tracking and AI coaching tailored to each role.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="generatePerformanceReport()">Generate My Report</button>
+                    </div>
+                    <div class="card-title">Role KPI Matrix</div>
+                    <div style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; margin-bottom: 20px;" id="perfRoleCards"></div>
+                    <div class="card-title">My Performance Report</div>
+                    <div id="perfReportOutput" style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e; min-height: 80px;">
+                        <p style="color: #718096; text-align: center; padding: 20px;">Click "Generate My Report" to get your personalized KPI analysis and coaching from Claude AI.</p>
+                    </div>
+                    <div class="card-title" style="margin-top: 20px;">Report History</div>
+                    <div id="perfReportHistory">
+                        <p style="color: #718096; text-align: center; padding: 20px;">No reports generated yet.</p>
+                    </div>
                 </div>
             </div>
+
+            <!-- PHASE 4: TRAINING HUB -->
+            <div class="page" id="page-training-hub">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <div class="card-title" style="margin: 0;">Training Hub</div>
+                            <p style="color: #718096; font-size: 13px; margin-top: 4px;">Structured onboarding paths, SOPs, skill assessments, and AI tutor.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddTrainingModule()">+ Add Module</button>
+                    </div>
+                    <div class="card-title">Onboarding Paths</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;" id="trainingPathsList"></div>
+                    <div class="card" id="addTrainingModuleCard" style="display: none; margin-bottom: 16px;">
+                        <div class="card-title">Add Training Module</div>
+                        <div class="form-group">
+                            <label class="form-label">Module Name</label>
+                            <input type="text" class="form-control" id="trainingModuleName" placeholder="e.g. PPC Campaign Setup 101">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select class="form-control" id="trainingModuleRole">
+                                <option value="ppc-analyst">PPC Analyst</option>
+                                <option value="account-manager">Account Manager</option>
+                                <option value="listing-specialist">Listing Specialist</option>
+                                <option value="sales-rep">Sales Rep</option>
+                                <option value="operations">Operations</option>
+                                <option value="all">All Roles</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Content / SOP Steps</label>
+                            <textarea class="form-control" id="trainingModuleContent" rows="4" placeholder="Describe the training steps or paste SOP content..." style="resize: vertical;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Video URL (optional)</label>
+                            <input type="text" class="form-control" id="trainingModuleVideo" placeholder="https://www.loom.com/share/...">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="saveTrainingModule()">Save Module</button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('addTrainingModuleCard').style.display='none'">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="card-title" style="margin-top: 20px;">AI Tutor</div>
+                    <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e;">
+                        <p style="color: #718096; font-size: 12px; margin-bottom: 10px;">Ask any question about Horison SOPs, processes, or workflows.</p>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="form-control" id="aiTutorInput" placeholder="e.g. How do I set up a new PPC campaign for a client?" style="flex: 1;">
+                            <button class="btn btn-primary" onclick="askAiTutor()">Ask</button>
+                        </div>
+                        <div id="aiTutorOutput" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHASE 4: AI ASSISTANTS -->
+            <div class="page" id="page-ai-assistants">
+                <div class="card">
+                    <div class="card-title">Role-Specific AI Assistants</div>
+                    <p style="color: #718096; font-size: 13px; margin-bottom: 20px;">Purpose-built AI assistants for each department. Select an assistant and describe your task.</p>
+                    <div style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 12px; margin-bottom: 20px;" id="aiAssistantsList"></div>
+                    <div id="assistantChatPanel" style="display: none;">
+                        <div class="card-title" id="activeAssistantName">Assistant</div>
+                        <div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e;">
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <input type="text" class="form-control" id="assistantChatInput" placeholder="Describe your task..." style="flex: 1;">
+                                <button class="btn btn-primary" onclick="sendToAssistant()">Send</button>
+                            </div>
+                            <div id="assistantChatOutput" style="min-height: 80px;">
+                                <p style="color: #718096; text-align: center; padding: 16px;">Select an assistant above, then describe your task.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
