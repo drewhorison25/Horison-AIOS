@@ -3122,7 +3122,8 @@ async function clearClaudeApiKey() {
         return;
     }
 
-    await sb.from('app_settings').delete().eq('key', 'claude_api_key');
+    const { error: delErr } = await sb.from('app_settings').delete().eq('key', 'claude_api_key');
+    if (delErr) { showToast('Delete failed: ' + delErr.message, 'error'); return; }
     _cachedApiKey = null;
     document.getElementById('claudeApiKeyInput').value = '';
     updateApiKeyStatus();
@@ -3669,7 +3670,8 @@ async function deleteAutomation(id) {
     const { data: relatedLogs } = await sb.from('automation_logs').select('id').eq('automation_id', id);
     if (relatedLogs) {
         for (const log of relatedLogs) {
-            await sb.from('automation_logs').delete().eq('id', log.id);
+            const { error: logErr } = await sb.from('automation_logs').delete().eq('id', log.id);
+            if (logErr) { showToast('Log delete failed: ' + logErr.message, 'error'); return; }
         }
     }
 
@@ -4480,7 +4482,8 @@ async function disconnectApi(apiId) {
     if (!confirm('Disconnect ' + (api?.name || apiId) + '? This will remove all stored credentials.')) return;
 
     const configKey = 'api_' + apiId;
-    await sb.from('app_settings').delete().eq('key', configKey);
+    const { error } = await sb.from('app_settings').delete().eq('key', configKey);
+    if (error) { showToast('Disconnect failed: ' + error.message, 'error'); return; }
     delete apiConfigs[configKey];
 
     document.getElementById('apiConfigPanel').style.display = 'none';
@@ -4508,7 +4511,8 @@ async function removeCustomApi(apiId) {
     apiConfigs['api_custom_integrations'] = customs;
 
     // Remove credentials
-    await sb.from('app_settings').delete().eq('key', 'api_' + apiId);
+    const { error: credErr } = await sb.from('app_settings').delete().eq('key', 'api_' + apiId);
+    if (credErr) { showToast('Delete failed: ' + credErr.message, 'error'); return; }
     delete apiConfigs['api_' + apiId];
 
     document.getElementById('apiConfigPanel').style.display = 'none';
@@ -4639,7 +4643,8 @@ async function removeApiConfig(apiId) {
     if (!confirm('Disconnect this API? This will remove all stored credentials.')) return;
 
     const configKey = 'api_' + apiId;
-    await sb.from('app_settings').delete().eq('key', configKey);
+    const { error } = await sb.from('app_settings').delete().eq('key', configKey);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
 
     delete apiConfigs[configKey];
     document.getElementById('apiConfigPanel').style.display = 'none';
