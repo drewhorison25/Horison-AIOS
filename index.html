@@ -5735,6 +5735,939 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 </script>
+// ============================================================
+// HORISON AIOS — PERSISTENCE PATCH
+// ============================================================
+// This script overrides all in-memory features with Supabase-
+// backed persistence. Add this as a SECOND <script> tag right
+// before </body> in your AIOS.html file.
+//
+// PREREQUISITE: Run supabase-migration.sql in your Supabase
+// SQL Editor FIRST to create the required tables.
+// ============================================================
 
+// ============================================================
+// 1. TASKS (Productivity OS) — Full Supabase persistence
+// ============================================================
+async function loadTasks() {
+    try {
+        const { data } = await sb.from('tasks').select('*').order('created_at', { ascending: false });
+        tasks = data || [];
+    } catch(e) { console.warn('Could not load tasks:', e); }
+    renderTasks();
+}
+
+async function saveTask() {
+    const title = document.getElementById('taskTitle').value.trim();
+    if (!title) { showToast('Please enter a task title', 'error'); return; }
+
+    const record = {
+        title,
+        priority: document.getElementById('taskPriority').value,
+        status: document.getElementById('taskStatus').value,
+        deadline: document.getElementById('taskDeadline').value || null,
+        assignee: document.getElementById('taskAssignee').value.trim() || currentProfile?.name || '',
+        notes: document.getElementById('taskNotes').value.trim(),
+        created_by: currentProfile?.name || '',
+        user_id: currentUser?.id,
+        created_at: new Date().toISOString()
+    };
+
+    const { error } = await sb.from('tasks').insert(record);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    document.getElementById('addTaskCard').style.display = 'none';
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskNotes').value = '';
+    document.getElementById('taskAssignee').value = '';
+    await loadTasks();
+    showToast('Task created!', 'success');
+}
+
+async function updateTaskStatus(idx, s) {
+    const filtered = getFilteredTaskList();
+    const t = filtered[idx];
+    if (!t) return;
+    const { error } = await sb.from('tasks').update({ status: s }).eq('id', t.id);
+    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+    t.status = s;
+    renderTasks();
+    showToast('Task updated', 'info');
+}
+
+async function editTask(idx) {
+    const filtered = getFilteredTaskList();
+    const t = filtered[idx];
+    if (!t) return;
+    const n = prompt('Edit title:', t.title);
+    if (n === null) return;
+    const a = prompt('Edit assignee:', t.assignee);
+    if (a === null) return;
+    const newTitle = n.trim() || t.title;
+    const newAssignee = a.trim() || t.assignee;
+    const { error } = await sb.from('tasks').update({ title: newTitle, assignee: newAssignee }).eq('id', t.id);
+    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+    t.title = newTitle;
+    t.assignee = newAssignee;
+    renderTasks();
+    showToast('Task updated', 'success');
+}
+
+async function removeTask(idx) {
+    const filtered = getFilteredTaskList();
+    const t = filtered[idx];
+    if (!t) return;
+    if (!confirm('Remove this task?')) return;
+    const { error } = await sb.from('tasks').delete().eq('id', t.id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadTasks();
+    showToast('Task removed', 'info');
+}
+
+// Helper to get filtered task list (matches renderTasks logic)
+function getFilteredTaskList() {
+    const filter = document.getElementById('taskFilter')?.value || 'all';
+    const search = (document.getElementById('taskSearch')?.value || '').toLowerCase();
+    let filtered = tasks;
+    if (filter !== 'all') filtered = filtered.filter(t => t.status === filter);
+    if (search) filtered = filtered.filter(t => t.title.toLowerCase().includes(search) || (t.assignee||'').toLowerCase().includes(search));
+    return filtered;
+}
+
+function renderTasks() {
+    const filtered = getFilteredTaskList();
+    const stats = document.getElementById('taskStatsBar');
+    if (stats) {
+        stats.innerHTML = [
+            { label: 'To Do', val: tasks.filter(t => t.status === 'todo').length, color: '#667eea' },
+            { label: 'In Progress', val: tasks.filter(t => t.status === 'in-progress').length, color: '#ed8936' },
+            { label: 'Done', val: tasks.filter(t => t.status === 'done').length, color: '#48bb78' },
+            { label: 'Overdue', val: tasks.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length, color: '#fc8181' }
+        ].map(s => '<div style="background:#0f0f1a;padding:10px 14px;border-radius:8px;border:1px solid #2d2d4e;text-align:center;"><div style="font-size:20px;font-weight:700;color:' + s.color + ';">' + s.val + '</div><div style="font-size:10px;color:#718096;">' + s.label + '</div></div>').join('');
+    }
+    const list = document.getElementById('taskList');
+    if (filtered.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;">No tasks found.</p>'; return; }
+    const pColors = { high: '#fc8181', medium: '#ed8936', low: '#48bb78' };
+    const sLabels = { 'todo': 'To Do', 'in-progress': 'In Progress', 'review': 'In Review', 'done': 'Done' };
+    list.innerHTML = filtered.map((t, idx) => {
+        const overdue = t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done';
+        return '<div style="background:#0f0f1a;padding:12px 16px;border-radius:10px;border:1px solid #2d2d4e;margin-bottom:8px;border-left:3px solid ' + (pColors[t.priority] || '#667eea') + ';">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;"><div style="flex:1;">' +
+                '<div style="font-weight:600;font-size:13px;">' + escapeHtml(t.title) + (overdue ? ' <span style="color:#fc8181;font-size:10px;font-weight:600;">OVERDUE</span>' : '') + '</div>' +
+                '<div style="font-size:11px;color:#718096;margin-top:3px;"><span class="badge badge-blue" style="font-size:9px;">' + (sLabels[t.status] || t.status) + '</span> · ' + escapeHtml(t.assignee || '') + (t.deadline ? ' · Due: ' + t.deadline : '') + ' · ' + timeAgo(t.created_at) + '</div>' +
+            '</div><div style="display:flex;gap:4px;">' +
+                '<select onchange="updateTaskStatus(' + idx + ',this.value)" style="padding:2px 6px;background:#1a1a2e;color:#e2e8f0;border:1px solid #2d2d4e;border-radius:4px;font-size:10px;">' +
+                    '<option value="todo"' + (t.status === 'todo' ? ' selected' : '') + '>To Do</option><option value="in-progress"' + (t.status === 'in-progress' ? ' selected' : '') + '>In Progress</option><option value="review"' + (t.status === 'review' ? ' selected' : '') + '>In Review</option><option value="done"' + (t.status === 'done' ? ' selected' : '') + '>Done</option></select>' +
+                '<button onclick="editTask(' + idx + ')" style="padding:2px 6px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Edit</button>' +
+                '<button onclick="removeTask(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' +
+            '</div></div></div>';
+    }).join('');
+}
+
+// ============================================================
+// 2. CHECK-INS — Supabase persistence
+// ============================================================
+async function loadCheckIns() {
+    try {
+        const { data } = await sb.from('check_ins').select('*').order('created_at', { ascending: false }).limit(20);
+        checkIns = data || [];
+    } catch(e) { console.warn('Could not load check-ins:', e); }
+    renderCheckIns();
+}
+
+async function submitCheckIn() {
+    const text = document.getElementById('checkInText').value.trim();
+    if (!text) { showToast('Please enter what you accomplished', 'error'); return; }
+    const record = {
+        text,
+        blockers: document.getElementById('checkInBlockers').value.trim(),
+        name: currentProfile?.name || 'User',
+        user_id: currentUser?.id,
+        created_at: new Date().toISOString()
+    };
+    const { error } = await sb.from('check_ins').insert(record);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    document.getElementById('checkInText').value = '';
+    document.getElementById('checkInBlockers').value = '';
+    await loadCheckIns();
+    showToast('Check-in submitted!', 'success');
+}
+
+function renderCheckIns() {
+    const list = document.getElementById('checkInHistory');
+    if (!list || checkIns.length === 0) { if (list) list.innerHTML = ''; return; }
+    list.innerHTML = checkIns.slice(0, 5).map(c => {
+        const q = "'";
+        return '<div style="background:#16162e;padding:10px 14px;border-radius:8px;margin-top:8px;border-left:3px solid #48bb78;">' +
+            '<div style="display:flex;justify-content:space-between;">' +
+                '<span style="font-weight:600;font-size:12px;">' + escapeHtml(c.name) + '</span>' +
+                '<div style="display:flex;gap:4px;align-items:center;">' +
+                    '<span style="font-size:10px;color:#718096;">' + timeAgo(c.created_at) + '</span>' +
+                    '<button onclick="removeCheckIn(' + q + c.id + q + ')" style="padding:1px 5px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:3px;cursor:pointer;font-size:8px;">X</button>' +
+                '</div>' +
+            '</div>' +
+            '<div style="font-size:12px;color:#e2e8f0;margin-top:4px;">' + escapeHtml(c.text) + '</div>' +
+            (c.blockers ? '<div style="font-size:11px;color:#fc8181;margin-top:3px;">Blockers: ' + escapeHtml(c.blockers) + '</div>' : '') +
+        '</div>';
+    }).join('');
+}
+
+async function removeCheckIn(id) {
+    const { error } = await sb.from('check_ins').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadCheckIns();
+    showToast('Removed', 'info');
+}
+
+// ============================================================
+// 3. DATA INPUT PORTAL — Supabase persistence
+// ============================================================
+async function loadDataInputs() {
+    try {
+        const { data } = await sb.from('data_inputs').select('*').order('created_at', { ascending: false }).limit(20);
+        dataInputSubmissions = data || [];
+    } catch(e) { console.warn('Could not load data inputs:', e); }
+    renderDataInputHistory();
+}
+
+async function submitDataInput() {
+    const cat = document.getElementById('dataInputCategory').value;
+    const title = document.getElementById('dataInputTitle').value.trim();
+    const content = document.getElementById('dataInputContent').value.trim();
+    if (!title || !content) { showToast('Title and details are required', 'error'); return; }
+
+    const catL = { 'client-note': 'Client Note', 'sop-update': 'SOP Update', 'bug-report': 'Bug Report', 'content-idea': 'Content Idea', 'general-feedback': 'Feedback' };
+    const routeL = { 'client-note': 'Client Folder', 'sop-update': 'SOP Library', 'bug-report': 'Dev Queue', 'content-idea': 'Content Pipeline', 'general-feedback': 'Management Queue' };
+
+    const record = {
+        category: cat,
+        cat_label: catL[cat],
+        title,
+        content,
+        client_name: document.getElementById('dataInputClient')?.value?.trim() || null,
+        priority: document.getElementById('dataInputPriority').value,
+        routed_to: routeL[cat],
+        submitted_by: currentProfile?.name || 'User',
+        user_id: currentUser?.id,
+        created_at: new Date().toISOString()
+    };
+
+    const { error } = await sb.from('data_inputs').insert(record);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    document.getElementById('dataInputTitle').value = '';
+    document.getElementById('dataInputContent').value = '';
+    await loadDataInputs();
+    showToast('Submitted and routed to: ' + routeL[cat], 'success');
+}
+
+function renderDataInputHistory() {
+    const list = document.getElementById('dataInputHistory');
+    if (dataInputSubmissions.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;">No submissions yet.</p>'; return; }
+    list.innerHTML = dataInputSubmissions.slice(0, 10).map(s => {
+        const q = "'";
+        return '<div style="background:#0f0f1a;padding:10px 14px;border-radius:8px;border:1px solid #2d2d4e;margin-bottom:6px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<div><span style="font-weight:600;font-size:12px;">' + escapeHtml(s.title) + '</span> <span class="badge badge-blue" style="font-size:9px;">' + escapeHtml(s.cat_label || s.category) + '</span> <span style="font-size:10px;color:#48bb78;">Routed to: ' + escapeHtml(s.routed_to || '') + '</span></div>' +
+                '<div style="display:flex;gap:4px;align-items:center;">' +
+                    '<span style="font-size:10px;color:#718096;">' + timeAgo(s.created_at) + '</span>' +
+                    '<button onclick="removeDataInput(' + q + s.id + q + ')" style="padding:1px 5px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:3px;cursor:pointer;font-size:8px;">X</button>' +
+                '</div>' +
+            '</div></div>';
+    }).join('');
+}
+
+async function removeDataInput(id) {
+    const { error } = await sb.from('data_inputs').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadDataInputs();
+    showToast('Removed', 'info');
+}
+
+// ============================================================
+// 4. ANNOUNCEMENTS — Supabase persistence
+// ============================================================
+async function loadAnnouncements() {
+    try {
+        const { data } = await sb.from('announcements').select('*').order('created_at', { ascending: false });
+        announcements = data || [];
+    } catch(e) { console.warn('Could not load announcements:', e); }
+    renderAnnouncements();
+}
+
+async function postAnnouncement() {
+    const title = document.getElementById('announcementTitle').value.trim();
+    const content = document.getElementById('announcementContent').value.trim();
+    if (!title || !content) { showToast('Title and content are required', 'error'); return; }
+
+    const record = {
+        title,
+        type: document.getElementById('announcementType').value,
+        content,
+        author: currentProfile?.name || 'Admin',
+        user_id: currentUser?.id,
+        created_at: new Date().toISOString()
+    };
+
+    const { error } = await sb.from('announcements').insert(record);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    document.getElementById('postAnnouncementCard').style.display = 'none';
+    document.getElementById('announcementTitle').value = '';
+    document.getElementById('announcementContent').value = '';
+    await loadAnnouncements();
+    showToast('Announcement posted!', 'success');
+}
+
+async function editAnnouncement(idx) {
+    const a = announcements[idx];
+    if (!a) return;
+    const n = prompt('Edit title:', a.title);
+    if (n === null) return;
+    const c = prompt('Edit content:', a.content);
+    if (c === null) return;
+    const newTitle = n.trim() || a.title;
+    const newContent = c.trim() || a.content;
+    const { error } = await sb.from('announcements').update({ title: newTitle, content: newContent }).eq('id', a.id);
+    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+    await loadAnnouncements();
+    showToast('Updated', 'success');
+}
+
+async function removeAnnouncement(idx) {
+    if (!confirm('Remove this announcement?')) return;
+    const a = announcements[idx];
+    if (!a) return;
+    const { error } = await sb.from('announcements').delete().eq('id', a.id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadAnnouncements();
+    showToast('Removed', 'info');
+}
+
+function renderAnnouncements() {
+    const list = document.getElementById('announcementsList');
+    if (announcements.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;">No announcements yet.</p>'; return; }
+    const tC = { news: '#667eea', update: '#48bb78', feature: '#ed8936', alert: '#fc8181' };
+    const isAdmin = RBAC.isSuperuserOrAdmin(currentProfile);
+    const q = "'";
+    list.innerHTML = announcements.map((a, idx) =>
+        '<div style="background:#0f0f1a;padding:16px;border-radius:12px;border:1px solid #2d2d4e;margin-bottom:10px;border-left:3px solid ' + (tC[a.type] || '#667eea') + ';">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">' +
+                '<div><span style="font-weight:700;font-size:14px;">' + escapeHtml(a.title) + '</span> <span class="badge" style="font-size:9px;background:' + (tC[a.type] || '#667eea') + '20;color:' + (tC[a.type] || '#667eea') + ';border:1px solid ' + (tC[a.type] || '#667eea') + '40;">' + (a.type || 'news') + '</span></div>' +
+                (isAdmin ? '<div style="display:flex;gap:4px;"><button onclick="editAnnouncement(' + idx + ')" style="padding:2px 6px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Edit</button><button onclick="removeAnnouncement(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button></div>' : '') +
+            '</div>' +
+            '<div style="font-size:13px;color:#a0aec0;line-height:1.6;">' + escapeHtml(a.content) + '</div>' +
+            '<div style="font-size:10px;color:#4a5568;margin-top:8px;">Posted by ' + escapeHtml(a.author || 'System') + ' · ' + timeAgo(a.created_at) + '</div>' +
+        '</div>'
+    ).join('');
+}
+
+// ============================================================
+// 5. MEETINGS — Supabase persistence
+// ============================================================
+async function loadMeetings() {
+    try {
+        const { data } = await sb.from('meetings').select('*').order('created_at', { ascending: false });
+        meetingArchive = data || [];
+    } catch(e) { console.warn('Could not load meetings:', e); }
+    renderMeetingArchive();
+}
+
+async function analyzeTranscript() {
+    const title = document.getElementById('meetingTitle').value.trim();
+    const attendees = document.getElementById('meetingAttendees').value.trim();
+    const transcript = document.getElementById('meetingTranscript').value.trim();
+
+    if (!title || !transcript) { showToast('Please enter a title and transcript', 'error'); return; }
+
+    const apiKey = await getClaudeApiKey();
+    if (!apiKey) { showToast('Claude API key required', 'error'); return; }
+
+    const output = document.getElementById('meetingAnalysisOutput');
+    output.innerHTML = '<div style="background: #0f0f1a; padding: 16px; border-radius: 10px; border: 1px solid #2d2d4e;"><p style="color: #718096;">Analyzing transcript with Claude AI...</p></div>';
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514', max_tokens: 2048,
+                system: 'You are the Meeting Intelligence module for Horison Marketing (Amazon agency). Analyze meeting transcripts and extract: 1) KEY DECISIONS made, 2) ACTION ITEMS with owners, 3) CLIENT SENTIMENT (positive/neutral/negative with reasoning), 4) COACHING INSIGHTS for the team, 5) FOLLOW-UP ITEMS with suggested deadlines. Be specific and actionable.',
+                messages: [{ role: 'user', content: 'Meeting: ' + title + '\nAttendees: ' + attendees + '\nTranscript:\n' + transcript }]
+            })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || '';
+
+        // Save to Supabase
+        const { data: inserted, error } = await sb.from('meetings').insert({
+            title, attendees, transcript, analysis: text,
+            user_id: currentUser?.id,
+            created_at: new Date().toISOString()
+        }).select().single();
+
+        if (error) { console.warn('Meeting save failed:', error); }
+
+        output.innerHTML = '<div style="background: #0f0f1a; padding: 20px; border-radius: 12px; border: 1px solid #2d2d4e; border-left: 3px solid #667eea;">' +
+            '<div style="font-weight: 600; margin-bottom: 12px;">' + escapeHtml(title) + ' - Analysis</div>' +
+            '<pre style="font-family: inherit; font-size: 13px; color: #e2e8f0; white-space: pre-wrap; line-height: 1.7;">' + escapeHtml(text) + '</pre></div>';
+
+        document.getElementById('addTranscriptCard').style.display = 'none';
+        document.getElementById('meetingTitle').value = '';
+        document.getElementById('meetingAttendees').value = '';
+        document.getElementById('meetingTranscript').value = '';
+        await loadMeetings();
+        showToast('Meeting analyzed!', 'success');
+    } catch(e) {
+        output.innerHTML = '<p style="color: #fc8181; padding: 16px;">Error: ' + escapeHtml(e.message) + '</p>';
+    }
+}
+
+function renderMeetingArchive() {
+    const list = document.getElementById('meetingArchiveList');
+    if (meetingArchive.length === 0) {
+        list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No meetings analyzed yet.</p>';
+        return;
+    }
+    const q = "'";
+    list.innerHTML = meetingArchive.map((m, idx) =>
+        '<div style="background: #0f0f1a; padding: 12px 16px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                '<div style="cursor: pointer; flex: 1;" onclick="toggleMeetingDetail(' + idx + ')">' +
+                    '<span style="font-weight: 600; font-size: 13px;">' + escapeHtml(m.title) + '</span>' +
+                    ' <span style="font-size: 11px; color: #718096;">\xb7 ' + escapeHtml(m.attendees || '') + ' \xb7 ' + timeAgo(m.created_at) + '</span>' +
+                '</div>' +
+                '<div style="display: flex; gap: 6px; align-items: center;">' +
+                    '<button onclick="editMeeting(' + q + m.id + q + ')" style="padding:3px 8px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Edit</button>' +
+                    '<button onclick="removeMeeting(' + q + m.id + q + ')" style="padding:3px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Remove</button>' +
+                '</div>' +
+            '</div>' +
+            '<div id="meetingDetail' + idx + '" style="display: none; margin-top: 12px;">' +
+                '<pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap; line-height: 1.6;">' + escapeHtml(m.analysis || '') + '</pre>' +
+            '</div>' +
+        '</div>'
+    ).join('');
+}
+
+async function removeMeeting(id) {
+    if (!confirm('Remove this meeting from archive?')) return;
+    const { error } = await sb.from('meetings').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadMeetings();
+    showToast('Meeting removed', 'info');
+}
+
+async function editMeeting(id) {
+    const m = meetingArchive.find(x => x.id === id);
+    if (!m) return;
+    const newTitle = prompt('Edit meeting title:', m.title);
+    if (newTitle === null) return;
+    const newAttendees = prompt('Edit attendees:', m.attendees);
+    if (newAttendees === null) return;
+    const { error } = await sb.from('meetings').update({
+        title: newTitle.trim() || m.title,
+        attendees: newAttendees.trim() || m.attendees
+    }).eq('id', id);
+    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+    await loadMeetings();
+    showToast('Meeting updated', 'success');
+}
+
+// ============================================================
+// 6. SOP WORKFLOWS — Supabase persistence
+// ============================================================
+async function loadSopWorkflows() {
+    try {
+        const { data } = await sb.from('sop_workflows').select('*').order('is_preset', { ascending: false }).order('created_at', { ascending: true });
+        sopWorkflows = data || [];
+    } catch(e) {
+        console.warn('Could not load SOP workflows:', e);
+        // Fallback to presets if table doesn't exist yet
+        sopWorkflows = [...SOP_PRESETS];
+    }
+    renderSopWorkflows();
+}
+
+function renderSopWorkflows() {
+    const list = document.getElementById('sopWorkflowsList');
+    if (!list) return;
+    const q = "'";
+    list.innerHTML = sopWorkflows.map((sop, idx) => {
+        const isCustom = !sop.is_preset;
+        return '<div style="background: #0f0f1a; padding: 16px; border-radius: 12px; border: 1px solid #2d2d4e;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">' +
+                '<div style="font-weight: 600;">' + escapeHtml(sop.name) + (isCustom ? ' <span style="font-size:9px;color:#667eea;font-weight:400;">(Custom)</span>' : '') + '</div>' +
+                (isCustom ? '<div style="display:flex;gap:4px;">' +
+                    '<button onclick="editSopWorkflow(' + q + sop.id + q + ')" style="padding:2px 6px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Edit</button>' +
+                    '<button onclick="removeSopWorkflow(' + q + sop.id + q + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' +
+                '</div>' : '') +
+            '</div>' +
+            '<div style="font-size: 12px; color: #718096; margin-bottom: 12px;">' + escapeHtml(sop.description || '') + '</div>' +
+            '<div style="display: flex; gap: 8px; align-items: center;">' +
+                '<button class="btn btn-sm btn-primary" onclick="executeSop(' + q + sop.id + q + ')">Execute</button>' +
+                '<span class="badge badge-blue" style="font-size: 9px;">' + escapeHtml(sop.category || '') + '</span>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+async function saveSopWorkflow() {
+    const name = document.getElementById('sopName').value.trim();
+    const description = document.getElementById('sopDescription').value.trim();
+    const category = document.getElementById('sopCategory').value;
+    if (!name) { showToast('Please enter a name', 'error'); return; }
+
+    const { error } = await sb.from('sop_workflows').insert({
+        name, description, category,
+        is_preset: false,
+        user_id: currentUser?.id,
+        created_at: new Date().toISOString()
+    });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    document.getElementById('createSopCard').style.display = 'none';
+    document.getElementById('sopName').value = '';
+    document.getElementById('sopDescription').value = '';
+    await loadSopWorkflows();
+    showToast('SOP workflow created!', 'success');
+}
+
+async function editSopWorkflow(id) {
+    const sop = sopWorkflows.find(s => s.id === id);
+    if (!sop || sop.is_preset) return;
+    const newName = prompt('Edit SOP name:', sop.name);
+    if (newName === null) return;
+    const newDesc = prompt('Edit description:', sop.description);
+    if (newDesc === null) return;
+    const { error } = await sb.from('sop_workflows').update({
+        name: newName.trim() || sop.name,
+        description: newDesc.trim() || sop.description
+    }).eq('id', id);
+    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+    await loadSopWorkflows();
+    showToast('SOP workflow updated', 'success');
+}
+
+async function removeSopWorkflow(id) {
+    const sop = sopWorkflows.find(s => s.id === id);
+    if (!sop || sop.is_preset) { showToast('Cannot remove built-in SOPs', 'error'); return; }
+    if (!confirm('Remove "' + sop.name + '" workflow?')) return;
+    const { error } = await sb.from('sop_workflows').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadSopWorkflows();
+    showToast('SOP workflow removed', 'info');
+}
+
+// ============================================================
+// 7. SOP LOGS — Supabase persistence
+// ============================================================
+async function loadSopLogs() {
+    try {
+        const { data } = await sb.from('sop_logs').select('*').order('created_at', { ascending: false }).limit(50);
+        sopLogs = data || [];
+    } catch(e) { console.warn('Could not load SOP logs:', e); }
+    renderSopLog();
+}
+
+async function executeSop(sopId) {
+    const sop = sopWorkflows.find(s => s.id === sopId);
+    if (!sop) return;
+
+    showToast('Executing "' + sop.name + '"...', 'info');
+    const apiKey = await getClaudeApiKey();
+    if (!apiKey) { showToast('Claude API key required', 'error'); return; }
+
+    const startTime = Date.now();
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514', max_tokens: 2048,
+                system: 'You are the SOP Automation Engine for Horison Marketing (Amazon agency, 200+ brands). Execute the given SOP workflow and produce a detailed execution report with: 1) Steps completed, 2) Results/outputs per step, 3) Items flagged for human review, 4) Next steps. Be specific and realistic.',
+                messages: [{ role: 'user', content: 'Execute this SOP workflow:\nName: ' + sop.name + '\nDescription: ' + (sop.description || '') + '\nCategory: ' + (sop.category || '') + '\nExecuted by: ' + (currentProfile?.name || 'System') + '\nTimestamp: ' + new Date().toISOString() }]
+            })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || '';
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        await sb.from('sop_logs').insert({
+            sop_name: sop.name, sop_id: sop.id, output: text,
+            duration: duration + 's', status: 'success',
+            run_by: currentProfile?.name || 'System',
+            user_id: currentUser?.id,
+            created_at: new Date().toISOString()
+        });
+        await loadSopLogs();
+        showToast('"' + sop.name + '" executed successfully!', 'success');
+    } catch(e) {
+        await sb.from('sop_logs').insert({
+            sop_name: sop.name, sop_id: sop.id, output: 'Error: ' + e.message,
+            duration: '0s', status: 'failed',
+            run_by: currentProfile?.name || 'System',
+            user_id: currentUser?.id,
+            created_at: new Date().toISOString()
+        });
+        await loadSopLogs();
+        showToast('Execution failed: ' + e.message, 'error');
+    }
+}
+
+async function removeSopLog(idx) {
+    if (!confirm('Remove this log entry?')) return;
+    const log = sopLogs[idx];
+    if (!log) return;
+    const { error } = await sb.from('sop_logs').delete().eq('id', log.id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadSopLogs();
+    showToast('Log entry removed', 'info');
+}
+
+async function clearSopLog() {
+    if (!confirm('Clear all SOP execution logs?')) return;
+    const { data: allLogs } = await sb.from('sop_logs').select('id');
+    if (allLogs && allLogs.length > 0) {
+        for (const log of allLogs) {
+            await sb.from('sop_logs').delete().eq('id', log.id);
+        }
+    }
+    sopLogs = [];
+    renderSopLog();
+    showToast('SOP logs cleared', 'info');
+}
+
+function renderSopLog() {
+    const list = document.getElementById('sopExecutionLog');
+    if (!list) return;
+    if (sopLogs.length === 0) { list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No SOP workflows executed yet.</p>'; return; }
+    let html = '<div style="display: flex; justify-content: flex-end; margin-bottom: 8px;"><button onclick="clearSopLog()" style="padding:4px 10px;background:rgba(252,129,129,0.12);color:#fc8181;border:1px solid rgba(252,129,129,0.25);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Clear All Logs</button></div>';
+    html += sopLogs.slice(0, 10).map((log, idx) =>
+        '<div style="background: #0f0f1a; padding: 12px 14px; border-radius: 10px; border: 1px solid #2d2d4e; margin-bottom: 8px; border-left: 3px solid ' + (log.status === 'success' ? '#48bb78' : '#fc8181') + ';">' +
+            '<div style="display: flex; justify-content: space-between; margin-bottom: 6px;">' +
+                '<span style="font-weight: 600; font-size: 12px;">' + escapeHtml(log.sop_name) + ' <span class="badge ' + (log.status === 'success' ? 'badge-green' : 'badge-red') + '" style="font-size: 9px;">' + log.status + '</span></span>' +
+                '<div style="display:flex;gap:6px;align-items:center;">' +
+                    '<span style="font-size: 10px; color: #4a5568;">' + (log.duration || '') + ' \xb7 ' + escapeHtml(log.run_by || '') + ' \xb7 ' + timeAgo(log.created_at) + '</span>' +
+                    '<button onclick="removeSopLog(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' +
+                '</div>' +
+            '</div>' +
+            '<pre style="font-family: inherit; font-size: 11px; color: #a0aec0; white-space: pre-wrap; max-height: 150px; overflow-y: auto;">' + escapeHtml(log.output || '') + '</pre>' +
+        '</div>'
+    ).join('');
+    list.innerHTML = html;
+}
+
+// ============================================================
+// 8. TRAINING MODULES — Supabase persistence
+// ============================================================
+async function loadTrainingModules() {
+    try {
+        const { data } = await sb.from('training_modules').select('*').order('is_preset', { ascending: false }).order('created_at', { ascending: true });
+        trainingModules = data || [];
+    } catch(e) {
+        console.warn('Could not load training modules:', e);
+        trainingModules = [...TRAINING_PRESETS];
+    }
+    renderTrainingPaths();
+}
+
+async function saveTrainingModule() {
+    const name = document.getElementById('trainingModuleName').value.trim();
+    const role = document.getElementById('trainingModuleRole').value;
+    const content = document.getElementById('trainingModuleContent').value.trim();
+    const video = document.getElementById('trainingModuleVideo').value.trim();
+    if (!name || !content) { showToast('Name and content are required', 'error'); return; }
+
+    const { error } = await sb.from('training_modules').insert({
+        name, role, content, video,
+        is_preset: false,
+        user_id: currentUser?.id,
+        created_at: new Date().toISOString()
+    });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    document.getElementById('addTrainingModuleCard').style.display = 'none';
+    document.getElementById('trainingModuleName').value = '';
+    document.getElementById('trainingModuleContent').value = '';
+    document.getElementById('trainingModuleVideo').value = '';
+    await loadTrainingModules();
+    showToast('Training module added!', 'success');
+}
+
+async function editTrainingModule(idx) {
+    const mod = trainingModules[idx];
+    if (!mod || mod.is_preset) return;
+    const newName = prompt('Edit module name:', mod.name);
+    if (newName === null) return;
+    const newContent = prompt('Edit content:', mod.content);
+    if (newContent === null) return;
+    const { error } = await sb.from('training_modules').update({
+        name: newName.trim() || mod.name,
+        content: newContent.trim() || mod.content
+    }).eq('id', mod.id);
+    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+    await loadTrainingModules();
+    showToast('Module updated', 'success');
+}
+
+async function removeTrainingModule(idx) {
+    const mod = trainingModules[idx];
+    if (!mod || mod.is_preset) { showToast('Cannot remove built-in modules', 'error'); return; }
+    if (!confirm('Remove "' + mod.name + '"?')) return;
+    const { error } = await sb.from('training_modules').delete().eq('id', mod.id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadTrainingModules();
+    showToast('Module removed', 'info');
+}
+
+function renderTrainingPaths() {
+    const list = document.getElementById('trainingPathsList');
+    if (!list) return;
+    const roleLabel = { 'all': 'All Roles', 'ppc-analyst': 'PPC Analyst', 'account-manager': 'Account Manager', 'listing-specialist': 'Listing Specialist', 'sales-rep': 'Sales Rep', 'operations': 'Operations' };
+    list.innerHTML = trainingModules.map((mod, idx) => {
+        const isCustom = !mod.is_preset;
+        return '<div style="background: #0f0f1a; padding: 14px 16px; border-radius: 10px; border: 1px solid #2d2d4e;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">' +
+                '<div style="font-weight: 600; font-size: 13px;">' + escapeHtml(mod.name) + (isCustom ? ' <span style="font-size:9px;color:#667eea;">(Custom)</span>' : '') + '</div>' +
+                '<div style="display: flex; gap: 4px;">' +
+                    (isCustom ? '<button onclick="editTrainingModule(' + idx + ')" style="padding:2px 6px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Edit</button>' +
+                    '<button onclick="removeTrainingModule(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div style="font-size: 11px; color: #718096; margin-bottom: 8px;">' + escapeHtml((mod.content || '').substring(0, 120)) + ((mod.content || '').length > 120 ? '...' : '') + '</div>' +
+            '<div style="display: flex; gap: 8px; align-items: center;">' +
+                '<span class="badge badge-blue" style="font-size: 9px;">' + (roleLabel[mod.role] || mod.role || 'all') + '</span>' +
+                (mod.video ? '<a href="' + escapeHtml(mod.video) + '" target="_blank" style="font-size: 10px; color: #667eea; text-decoration: none;">Video Link</a>' : '') +
+                '<button onclick="generateQuiz(' + idx + ')" style="padding:2px 8px;background:rgba(72,187,120,0.15);color:#48bb78;border:1px solid rgba(72,187,120,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">AI Quiz</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+// ============================================================
+// 9. PERFORMANCE REPORTS — Supabase persistence
+// ============================================================
+async function loadPerfReports() {
+    try {
+        const { data } = await sb.from('performance_reports').select('*').order('created_at', { ascending: false }).limit(20);
+        perfReports = data || [];
+    } catch(e) { console.warn('Could not load perf reports:', e); }
+    renderPerfHistory();
+}
+
+async function generatePerformanceReport() {
+    const output = document.getElementById('perfReportOutput');
+    output.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Generating your performance report...</p>';
+
+    const apiKey = await getClaudeApiKey();
+    if (!apiKey) { output.innerHTML = '<p style="color: #fc8181; padding: 16px;">Claude API key required.</p>'; return; }
+
+    const dept = currentProfile?.dept || 'General';
+    const role = currentProfile?.access_level || 'user-regular';
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514', max_tokens: 2048,
+                system: 'You are the Performance OS for Horison Marketing (Amazon growth agency, 200+ brands). Generate a personalized performance report. Role KPIs: ' + JSON.stringify(ROLE_KPIS),
+                messages: [{ role: 'user', content: 'Generate a performance report for:\nName: ' + (currentProfile?.name || 'Team Member') + '\nDepartment: ' + dept + '\nAccess Level: ' + role + '\nDate: ' + new Date().toLocaleDateString() + '\n\nInclude: 1) KPI SUMMARY, 2) PERFORMANCE SCORE, 3) STRENGTHS, 4) AREAS FOR IMPROVEMENT, 5) AI COACHING, 6) SUGGESTED GOALS.' }]
+            })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || '';
+
+        output.innerHTML = '<pre style="font-family: inherit; font-size: 13px; color: #e2e8f0; white-space: pre-wrap; line-height: 1.7;">' + escapeHtml(text) + '</pre>';
+
+        // Save to Supabase
+        await sb.from('performance_reports').insert({
+            name: currentProfile?.name,
+            dept: dept,
+            access_level: role,
+            report_text: text,
+            user_id: currentUser?.id,
+            created_at: new Date().toISOString()
+        });
+        await loadPerfReports();
+        showToast('Performance report generated!', 'success');
+    } catch(e) {
+        output.innerHTML = '<p style="color: #fc8181; padding: 16px;">Error: ' + escapeHtml(e.message) + '</p>';
+    }
+}
+
+function renderPerfHistory() {
+    const list = document.getElementById('perfReportHistory');
+    if (!list) return;
+    if (perfReports.length === 0) { list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No reports generated yet.</p>'; return; }
+    const q = "'";
+    list.innerHTML = perfReports.map((r, idx) =>
+        '<div style="background: #0f0f1a; padding: 10px 14px; border-radius: 8px; border: 1px solid #2d2d4e; margin-bottom: 8px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                '<div style="cursor: pointer; flex: 1;" onclick="togglePerfDetail(' + idx + ')">' +
+                    '<span style="font-weight: 600; font-size: 12px;">Report for ' + escapeHtml(r.name || 'User') + '</span>' +
+                    ' <span style="font-size: 11px; color: #718096;">' + timeAgo(r.created_at) + '</span>' +
+                '</div>' +
+                '<button onclick="removePerfReport(' + q + r.id + q + ')" style="padding:3px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Remove</button>' +
+            '</div>' +
+            '<div id="perfDetail' + idx + '" style="display: none; margin-top: 10px;"><pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap;">' + escapeHtml(r.report_text || '') + '</pre></div>' +
+        '</div>'
+    ).join('');
+}
+
+async function removePerfReport(id) {
+    if (!confirm('Remove this report?')) return;
+    const { error } = await sb.from('performance_reports').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadPerfReports();
+    showToast('Report removed', 'info');
+}
+
+// ============================================================
+// 10. DAILY BRIEFS — Supabase persistence
+// ============================================================
+async function loadDailyBriefs() {
+    try {
+        const { data } = await sb.from('daily_briefs').select('*').order('created_at', { ascending: false }).limit(20);
+        dailyBriefs = data || [];
+    } catch(e) { console.warn('Could not load daily briefs:', e); }
+    renderBriefHistory();
+}
+
+async function generateDailyBrief() {
+    const output = document.getElementById('dailyBriefOutput');
+    output.innerHTML = '<p style="color: #718096; text-align: center; padding: 40px;">Compiling executive intelligence report...</p>';
+
+    const apiKey = await getClaudeApiKey();
+    if (!apiKey) { output.innerHTML = '<p style="color: #fc8181; padding: 16px;">Claude API key required.</p>'; return; }
+
+    const connected = [];
+    if (apiConfigs['api_slack']) connected.push('Slack');
+    if (apiConfigs['api_clickup']) connected.push('ClickUp');
+    if (apiConfigs['api_google_sheets']) connected.push('Google Sheets');
+    if (apiConfigs['api_hubstaff']) connected.push('Hubstaff');
+    if (apiConfigs['api_amazon_sp']) connected.push('Amazon SP-API');
+
+    const { count: docCount } = await sb.from('documents').select('*', { count: 'exact', head: true });
+    const { count: autoCount } = await sb.from('automations').select('*', { count: 'exact', head: true });
+    const { data: recentLogs } = await sb.from('automation_logs').select('*').order('created_at', { ascending: false }).limit(5);
+
+    const contextData = 'Connected APIs: ' + (connected.length > 0 ? connected.join(', ') : 'None') +
+        '. Documents: ' + (docCount || 0) +
+        '. Automations: ' + (autoCount || 0) +
+        '. Recent runs: ' + (recentLogs?.length || 0) +
+        '. Team members: ' + (allTeamMembers?.length || 'unknown') +
+        '. Meetings today: ' + (meetingArchive?.length || 0);
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514', max_tokens: 3000,
+                system: 'You are the Daily Brief OS for Horison Marketing — an Amazon growth agency managing 200+ brands. Generate a comprehensive executive morning intelligence report. ' + contextData + '. User: ' + (currentProfile?.name || 'Executive') + '. Date: ' + new Date().toLocaleDateString() + '.',
+                messages: [{ role: 'user', content: 'Generate executive daily brief with sections: 1) EXECUTIVE SUMMARY, 2) CLIENT HEALTH, 3) TEAM WORKLOAD, 4) FINANCIAL SNAPSHOT, 5) COMMUNICATION HIGHLIGHTS, 6) ACTION ITEMS, 7) OPPORTUNITIES & THREATS, 8) CONTENT RECOMMENDATIONS.' }]
+            })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || '';
+
+        output.innerHTML = '<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">' +
+            '<span style="font-weight: 600; color: #667eea;">Daily Brief — ' + new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + '</span>' +
+            '<span style="font-size: 11px; color: #4a5568;">Generated at ' + new Date().toLocaleTimeString() + '</span></div>' +
+            '<pre style="font-family: inherit; font-size: 13px; color: #e2e8f0; white-space: pre-wrap; line-height: 1.7;">' + escapeHtml(text) + '</pre>';
+
+        // Save to Supabase
+        await sb.from('daily_briefs').insert({
+            brief_text: text,
+            generated_by: currentProfile?.name || 'System',
+            user_id: currentUser?.id,
+            created_at: new Date().toISOString()
+        });
+        await loadDailyBriefs();
+        showToast('Daily brief generated!', 'success');
+    } catch(e) {
+        output.innerHTML = '<p style="color: #fc8181; padding: 16px;">Error: ' + escapeHtml(e.message) + '</p>';
+    }
+}
+
+function renderBriefHistory() {
+    const list = document.getElementById('dailyBriefHistory');
+    if (!list) return;
+    if (dailyBriefs.length === 0) { list.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No briefs generated yet.</p>'; return; }
+    const q = "'";
+    list.innerHTML = dailyBriefs.map((b, idx) =>
+        '<div style="background: #0f0f1a; padding: 10px 14px; border-radius: 8px; border: 1px solid #2d2d4e; margin-bottom: 8px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                '<div style="cursor: pointer; flex: 1;" onclick="toggleBriefDetail(' + idx + ')">' +
+                    '<span style="font-weight: 600; font-size: 12px;">Daily Brief</span>' +
+                    ' <span style="font-size: 11px; color: #718096;">' + timeAgo(b.created_at) + ' · ' + escapeHtml(b.generated_by || '') + '</span>' +
+                '</div>' +
+                '<button onclick="removeBrief(' + q + b.id + q + ')" style="padding:3px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;">Remove</button>' +
+            '</div>' +
+            '<div id="briefDetail' + idx + '" style="display: none; margin-top: 10px;"><pre style="font-family: inherit; font-size: 12px; color: #a0aec0; white-space: pre-wrap;">' + escapeHtml(b.brief_text || '') + '</pre></div>' +
+        '</div>'
+    ).join('');
+}
+
+async function removeBrief(id) {
+    if (!confirm('Remove this brief?')) return;
+    const { error } = await sb.from('daily_briefs').delete().eq('id', id);
+    if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+    await loadDailyBriefs();
+    showToast('Brief removed', 'info');
+}
+
+// ============================================================
+// 11. OVERRIDE loadAllData() — Add all new load functions
+// ============================================================
+async function loadAllData() {
+    await Promise.all([
+        loadDocuments(),
+        loadTemplates(),
+        loadStorageFiles(),
+        loadTeam(),
+        loadToolRequests(),
+        loadAutomations(),
+        loadApiConfigs(),
+        loadTasks(),
+        loadCheckIns(),
+        loadDataInputs(),
+        loadAnnouncements(),
+        loadMeetings(),
+        loadSopWorkflows(),
+        loadSopLogs(),
+        loadTrainingModules(),
+        loadPerfReports(),
+        loadDailyBriefs(),
+    ]);
+    updateStats();
+}
+
+// ============================================================
+// 12. OVERRIDE showPage() — Fix page-specific data loading
+// ============================================================
+const _originalShowPage = showPage;
+showPage = function(pageId) {
+    _originalShowPage(pageId);
+    // Additional data loading for persisted features
+    if (pageId === 'productivity') { loadTasks(); loadCheckIns(); }
+    if (pageId === 'data-input') loadDataInputs();
+    if (pageId === 'announcements') loadAnnouncements();
+    if (pageId === 'meeting-intel') loadMeetings();
+    if (pageId === 'sop-engine') { loadSopWorkflows(); loadSopLogs(); }
+    if (pageId === 'training-hub') loadTrainingModules();
+    if (pageId === 'performance-os') loadPerfReports();
+    if (pageId === 'daily-brief') loadDailyBriefs();
+};
+
+// ============================================================
+// PATCH COMPLETE — All features now persist to Supabase
+// ============================================================
+console.log('[AIOS] Persistence patch loaded — all features backed by Supabase');
 </body>
 </html>
