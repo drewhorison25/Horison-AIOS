@@ -534,8 +534,6 @@ function showPage(pageId) {
     document.getElementById('pageTitle').textContent = titles[pageId] || pageId;
     document.querySelectorAll('.nav-item').forEach(item => { if (item.getAttribute('onclick') === "showPage('" + pageId + "')") item.classList.add('active'); });
     if (pageId === 'team') loadTeam(); if (pageId === 'login-history') loadLoginHistory(); if (pageId === 'storage') loadStorageFiles(); if (pageId === 'documents') loadDocuments(); if (pageId === 'templates') loadTemplates(); if (pageId === 'automations') loadAutomations(); if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); } if (pageId === 'api-hub') loadApiConfigs(); if (pageId === 'data-os') loadDataOs(); if (pageId === 'sop-engine') renderSopWorkflows(); if (pageId === 'meeting-intel') renderMeetingArchive(); if (pageId === 'comms-os') updateCommsStatus(); if (pageId === 'daily-brief') renderBriefHistory(); if (pageId === 'performance-os') renderPerfRoleCards(); if (pageId === 'training-hub') { renderTrainingPaths(); loadManagerTrainingView(); } if (pageId === 'ai-assistants') renderAiAssistants(); if (pageId === 'productivity') renderTasks(); if (pageId === 'data-input') updateInputHint(); if (pageId === 'announcements') { renderAnnouncements(); if (RBAC.isSuperuserOrAdmin(currentProfile)) document.getElementById('postAnnouncementBtn').style.display = 'block'; }
-    if (pageId === 'client-os') loadClients();
-    if (pageId === 'content-auto') loadContentItems();
 }
 function togglePassword() { const i = document.getElementById('passwordInput'); i.type = i.type === 'password' ? 'text' : 'password'; }
 function toggleSignupPassword() { const i = document.getElementById('signupPassword'); i.type = i.type === 'password' ? 'text' : 'password'; }
@@ -739,14 +737,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================================
 async function loadDataOs() {
     try {
-        const [docs, tasks, meetings, team, sops, training, announcements] = await Promise.all([
+        const [docs, tasks, meetings, team, sops, training, announcements, clients, content] = await Promise.all([
             sb.from('documents').select('*', { count: 'exact', head: true }),
             sb.from('tasks').select('*', { count: 'exact', head: true }),
             sb.from('meetings').select('*', { count: 'exact', head: true }),
             sb.from('profiles').select('*', { count: 'exact', head: true }),
             sb.from('sop_workflows').select('*', { count: 'exact', head: true }),
             sb.from('training_modules').select('*', { count: 'exact', head: true }),
-            sb.from('announcements').select('*', { count: 'exact', head: true })
+            sb.from('announcements').select('*', { count: 'exact', head: true }),
+            sb.from('clients').select('*', { count: 'exact', head: true }),
+            sb.from('content_items').select('*', { count: 'exact', head: true })
         ]);
         const connCount = API_INTEGRATIONS.filter(a => { const c = apiConfigs['api_' + a.id]; return c && a.fields.every(f => c[f.key]); }).length;
         document.getElementById('dosDocs').textContent = docs.count || 0;
@@ -765,7 +765,9 @@ async function loadDataOs() {
             { name: 'SOP Workflows', type: 'Automation Logs', status: 'active', color: '#f687b3' },
             { name: 'Training Modules', type: 'Progress Tracking', status: 'active', color: '#4fd1c5' },
             { name: 'Performance Reports', type: 'KPI Analytics', status: 'active', color: '#fc8181' },
-            { name: 'API Integrations', type: connCount + ' connected', status: connCount > 0 ? 'active' : 'pending', color: '#fbd38d' }
+            { name: 'API Integrations', type: connCount + ' connected', status: connCount > 0 ? 'active' : 'pending', color: '#fbd38d' },
+            { name: 'Client OS', type: (clients.count || 0) + ' clients tracked', status: (clients.count || 0) > 0 ? 'active' : 'pending', color: '#f687b3' },
+            { name: 'Content Pipeline', type: (content.count || 0) + ' items created', status: (content.count || 0) > 0 ? 'active' : 'pending', color: '#b794f4' }
         ];
         document.getElementById('dataOsSources').innerHTML = sources.map(s => '<div style="background:#0f0f1a;padding:14px;border-radius:10px;border:1px solid #2d2d4e;display:flex;align-items:center;gap:12px;"><div style="width:10px;height:10px;border-radius:50%;background:' + (s.status === 'active' ? s.color : '#4a5568') + ';flex-shrink:0;"></div><div style="flex:1;"><div style="font-weight:600;font-size:13px;">' + s.name + '</div><div style="font-size:11px;color:#718096;">' + s.type + '</div></div><span class="badge ' + (s.status === 'active' ? 'badge-green' : 'badge-yellow') + '">' + (s.status === 'active' ? 'Active' : 'Pending') + '</span></div>').join('');
     } catch(e) { console.warn('Data OS load error:', e); }
@@ -931,7 +933,7 @@ function renderContentPipeline() {
     const filtered = contentFilterType === 'all' ? allContentItems : allContentItems.filter(c => c.content_type === contentFilterType);
     const el = document.getElementById('contentPipelineList');
     if (filtered.length === 0) { el.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No content items' + (contentFilterType !== 'all' ? ' for ' + contentFilterType : '') + '.</p>'; return; }
-    const icons = { linkedin: 'in', skool: 'S', newsletter: '@', blog: 'B', youtube: 'YT' };
+    const icons = { linkedin: 'Li', skool: 'Sk', newsletter: 'Nl', blog: 'Bl', youtube: 'Yt' };
     const colors = { linkedin: '#0077B5', skool: '#5865F2', newsletter: '#48bb78', blog: '#ed8936', youtube: '#FF0000' };
     const sc = { draft: 'badge-gray', review: 'badge-yellow', approved: 'badge-blue', published: 'badge-green', archived: 'badge-gray' };
     el.innerHTML = filtered.map(c => '<div class="file-item"><div class="file-info"><div class="file-icon" style="background:' + (colors[c.content_type] || '#667eea') + '22;color:' + (colors[c.content_type] || '#667eea') + ';font-weight:700;">' + (icons[c.content_type] || '?') + '</div><div><div class="file-name">' + escapeHtml(c.title) + '</div><div class="file-meta"><span class="badge ' + (sc[c.status] || 'badge-gray') + '">' + c.status + '</span> · ' + c.content_type + (c.target_site ? ' · ' + c.target_site : '') + ' · ' + (c.source_type || 'manual') + ' · ' + timeAgo(c.created_at) + '</div></div></div><div class="file-actions"><button class="btn btn-sm btn-secondary" onclick="viewContent(\'' + c.id + '\')">View</button><button class="btn btn-sm btn-danger" onclick="deleteContent(\'' + c.id + '\')">Delete</button></div></div>').join('');
@@ -1901,6 +1903,8 @@ async function loadAllData() {
         loadTrainingModules(),
         loadPerfReports(),
         loadDailyBriefs(),
+        loadClients(),
+        loadContentItems(),
     ]);
     updateStats();
 }
@@ -1920,6 +1924,8 @@ showPage = function(pageId) {
     if (pageId === 'training-hub') loadTrainingModules();
     if (pageId === 'performance-os') loadPerfReports();
     if (pageId === 'daily-brief') loadDailyBriefs();
+    if (pageId === 'client-os') loadClients();
+    if (pageId === 'content-auto') loadContentItems();
 };
 
 // ============================================================
