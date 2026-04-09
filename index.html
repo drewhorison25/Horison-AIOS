@@ -570,7 +570,7 @@ function updatePag(prefix, total) { const sizes = { doc: DOC_PAGE_SIZE, tpl: TPL
 // CLAUDE API KEY MANAGEMENT
 // ============================================================
 // ── HARDCODED API KEY — Replace YOUR_KEY_HERE with your actual Anthropic key ──
-const CLAUDE_API_KEY = 'YOUR_KEY_HERE';
+const CLAUDE_API_KEY = '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';
 async function getClaudeApiKey() { return CLAUDE_API_KEY; }
 function saveClaudeApiKey() { showToast('API key is system-configured and cannot be changed.', 'info'); }
 function clearClaudeApiKey() { showToast('API key is system-configured and cannot be removed.', 'info'); }
@@ -800,9 +800,8 @@ async function importFathomTranscripts() {
 }
 
 // ============================================================
-// MANAGER TRAINING PROGRESS VIEW
+// MANAGER TRAINING PROGRESS VIEW — defined in persistence patch below
 // ============================================================
-async function loadManagerTrainingView() {
 
 // ============================================================
 // PHASE 5: CLIENT OS
@@ -970,6 +969,8 @@ function viewContent(id) {
     document.body.appendChild(ov); ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
 }
 async function deleteContent(id) { if (!confirm('Delete this content item?')) return; await sb.from('content_items').delete().eq('id', id); await loadContentItems(); showToast('Content deleted', 'info'); }
+
+async function loadManagerTrainingView() {
     const panel = document.getElementById('managerTrainingView');
     if (!panel) return;
     if (!RBAC.isManagerOrAbove(currentProfile)) { panel.style.display = 'none'; return; }
@@ -978,14 +979,22 @@ async function deleteContent(id) { if (!confirm('Delete this content item?')) re
     try {
         const { data: members } = await sb.from('profiles').select('id, name, email, dept, access_level, avatar').order('name');
         const { data: modules } = await sb.from('training_modules').select('id, name, role');
+        let progressMap = {};
+        try {
+            const { data: progress } = await sb.from('training_progress').select('user_id, module_id');
+            if (progress) progress.forEach(p => {
+                if (!progressMap[p.user_id]) progressMap[p.user_id] = new Set();
+                progressMap[p.user_id].add(p.module_id);
+            });
+        } catch(e) { console.warn('training_progress table not ready:', e); }
         if (!members || members.length === 0) { container.innerHTML = '<p style="color:#718096;text-align:center;padding:12px;">No team members found.</p>'; return; }
-        const totalModules = modules?.length || 0;
         container.innerHTML = '<div style="display:grid;gap:8px;">' + members.map(m => {
             const roleModules = modules ? modules.filter(mod => mod.role === 'all' || (m.dept && mod.role === m.dept.toLowerCase().replace(/\s/g,'-'))) : [];
-            const assignedCount = roleModules.length || totalModules;
-            const completedCount = Math.floor(Math.random() * (assignedCount + 1));
+            const assignedCount = roleModules.length || (modules?.length || 0);
+            const userCompleted = progressMap[m.id] || new Set();
+            const completedCount = roleModules.length > 0 ? roleModules.filter(mod => userCompleted.has(mod.id)).length : 0;
             const pct = assignedCount > 0 ? Math.round((completedCount / assignedCount) * 100) : 0;
-            const barColor = pct >= 80 ? '#48bb78' : pct >= 50 ? '#ed8936' : '#fc8181';
+            const barColor = pct >= 80 ? '#48bb78' : pct >= 50 ? '#ed8936' : pct > 0 ? '#667eea' : '#4a5568';
             return '<div style="background:#0f0f1a;padding:12px 14px;border-radius:8px;border:1px solid #2d2d4e;display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">' + (m.avatar || '?') + '</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.name || m.email) + '</div><div style="font-size:10px;color:#718096;">' + escapeHtml(m.dept || 'N/A') + ' · ' + RBAC.getDisplayLabel(m.access_level) + '</div></div><div style="width:120px;flex-shrink:0;"><div style="display:flex;justify-content:space-between;font-size:10px;color:#a0aec0;margin-bottom:3px;"><span>' + completedCount + '/' + assignedCount + ' modules</span><span>' + pct + '%</span></div><div style="height:6px;background:#2d2d4e;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width 0.3s;"></div></div></div></div>';
         }).join('') + '</div>';
     } catch(e) { container.innerHTML = '<p style="color:#fc8181;">Failed to load progress: ' + e.message + '</p>'; }
@@ -1629,6 +1638,7 @@ async function loadTrainingModules() {
         console.warn('Could not load training modules:', e);
         trainingModules = [...TRAINING_PRESETS];
     }
+    await loadMyProgress();
     renderTrainingPaths();
 }
 
@@ -1681,15 +1691,38 @@ async function removeTrainingModule(idx) {
     showToast('Module removed', 'info');
 }
 
+let myCompletedModules = new Set();
+async function loadMyProgress() {
+    if (!currentUser) return;
+    try {
+        const { data } = await sb.from('training_progress').select('module_id').eq('user_id', currentUser.id);
+        myCompletedModules = new Set((data || []).map(d => d.module_id));
+    } catch(e) { myCompletedModules = new Set(); }
+}
+async function completeModule(moduleId) {
+    if (!currentUser) return;
+    await sb.from('training_progress').upsert({ user_id: currentUser.id, module_id: moduleId, completed_at: new Date().toISOString() });
+    myCompletedModules.add(moduleId);
+    renderTrainingPaths();
+    showToast('Module completed!', 'success');
+}
+async function uncompleteModule(moduleId) {
+    if (!currentUser) return;
+    await sb.from('training_progress').delete().eq('user_id', currentUser.id).eq('module_id', moduleId);
+    myCompletedModules.delete(moduleId);
+    renderTrainingPaths();
+    showToast('Marked incomplete', 'info');
+}
 function renderTrainingPaths() {
     const list = document.getElementById('trainingPathsList');
     if (!list) return;
     const roleLabel = { 'all': 'All Roles', 'ppc-analyst': 'PPC Analyst', 'account-manager': 'Account Manager', 'listing-specialist': 'Listing Specialist', 'sales-rep': 'Sales Rep', 'operations': 'Operations' };
     list.innerHTML = trainingModules.map((mod, idx) => {
         const isCustom = !mod.is_preset;
-        return '<div style="background: #0f0f1a; padding: 14px 16px; border-radius: 10px; border: 1px solid #2d2d4e;">' +
+        const done = myCompletedModules.has(mod.id);
+        return '<div style="background: #0f0f1a; padding: 14px 16px; border-radius: 10px; border: 1px solid ' + (done ? 'rgba(72,187,120,0.4)' : '#2d2d4e') + ';">' +
             '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">' +
-                '<div style="font-weight: 600; font-size: 13px;">' + escapeHtml(mod.name) + (isCustom ? ' <span style="font-size:9px;color:#667eea;">(Custom)</span>' : '') + '</div>' +
+                '<div style="font-weight: 600; font-size: 13px;">' + (done ? '<span style="color:#48bb78;">&#10003; </span>' : '') + escapeHtml(mod.name) + (isCustom ? ' <span style="font-size:9px;color:#667eea;">(Custom)</span>' : '') + '</div>' +
                 '<div style="display: flex; gap: 4px;">' +
                     (isCustom ? '<button onclick="editTrainingModule(' + idx + ')" style="padding:2px 6px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Edit</button>' +
                     '<button onclick="removeTrainingModule(' + idx + ')" style="padding:2px 6px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Remove</button>' : '') +
@@ -1700,6 +1733,10 @@ function renderTrainingPaths() {
                 '<span class="badge badge-blue" style="font-size: 9px;">' + (roleLabel[mod.role] || mod.role || 'all') + '</span>' +
                 (mod.video ? '<a href="' + escapeHtml(mod.video) + '" target="_blank" style="font-size: 10px; color: #667eea; text-decoration: none;">Video Link</a>' : '') +
                 '<button onclick="generateQuiz(' + idx + ')" style="padding:2px 8px;background:rgba(72,187,120,0.15);color:#48bb78;border:1px solid rgba(72,187,120,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">AI Quiz</button>' +
+                (done ?
+                    '<button onclick="uncompleteModule(\'' + mod.id + '\')" style="padding:2px 8px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Undo Complete</button>' :
+                    '<button onclick="completeModule(\'' + mod.id + '\')" style="padding:2px 8px;background:rgba(102,126,234,0.15);color:#667eea;border:1px solid rgba(102,126,234,0.3);border-radius:4px;cursor:pointer;font-size:9px;font-weight:600;">Mark Complete</button>'
+                ) +
             '</div>' +
         '</div>';
     }).join('');
