@@ -441,7 +441,7 @@ function showApp() {
 
 async function loadAllData() { await Promise.all([loadDocuments(), loadTemplates(), loadStorageFiles(), loadTeam(), loadToolRequests(), loadAutomations(), loadApiConfigs()]); updateStats(); }
 
-async function updateStats() { const { count: dc } = await sb.from('documents').select('*', { count: 'exact', head: true }); const { count: tc } = await sb.from('templates').select('*', { count: 'exact', head: true }); document.getElementById('statDocs').textContent = dc || 0; document.getElementById('statTemplates').textContent = tc || 0; const { data: f } = await sb.storage.from('aios-files').list(currentUser?.id + '/'); document.getElementById('statFiles').textContent = f?.length || 0; document.getElementById('statAutomations').textContent = 0; }
+async function updateStats() { const { count: dc } = await sb.from('documents').select('*', { count: 'exact', head: true }); const { count: tc } = await sb.from('templates').select('*', { count: 'exact', head: true }); const { count: ac } = await sb.from('automations').select('*', { count: 'exact', head: true }); document.getElementById('statDocs').textContent = dc || 0; document.getElementById('statTemplates').textContent = tc || 0; const { data: f } = await sb.storage.from('aios-files').list(currentUser?.id + '/'); document.getElementById('statFiles').textContent = f?.length || 0; document.getElementById('statAutomations').textContent = ac || 0; }
 
 // ============================================================
 // DOCUMENTS
@@ -570,7 +570,7 @@ function updatePag(prefix, total) { const sizes = { doc: DOC_PAGE_SIZE, tpl: TPL
 // CLAUDE API KEY MANAGEMENT
 // ============================================================
 // ── HARDCODED API KEY — Replace YOUR_KEY_HERE with your actual Anthropic key ──
-const CLAUDE_API_KEY = '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';
+const CLAUDE_API_KEY = 'YOUR_KEY_HERE';
 async function getClaudeApiKey() { return CLAUDE_API_KEY; }
 function saveClaudeApiKey() { showToast('API key is system-configured and cannot be changed.', 'info'); }
 function clearClaudeApiKey() { showToast('API key is system-configured and cannot be removed.', 'info'); }
