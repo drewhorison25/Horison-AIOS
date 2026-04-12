@@ -250,7 +250,7 @@
         <div class="nav-item" data-page="performance-os" onclick="showPage('performance-os')">Performance OS</div>
         <div class="nav-item" data-page="training-hub" onclick="showPage('training-hub')">Training Hub</div>
         <div class="nav-item" data-page="ai-assistants" onclick="showPage('ai-assistants')">AI Assistants</div>
-        <div class="nav-section">SCALE</div>
+        <div class="nav-section" id="navSectionScale">SCALE</div>
         <div class="nav-item" data-page="client-os" onclick="showPage('client-os')">Client OS</div>
         <div class="nav-item" data-page="content-auto" onclick="showPage('content-auto')">Content Automation</div>
     </nav>
@@ -435,6 +435,7 @@ function showApp() {
     document.getElementById('navLoginHistory').style.display = RBAC.can(currentProfile, 'page:login-history') ? 'flex' : 'none';
     document.getElementById('navDailyBrief').style.display = RBAC.can(currentProfile, 'page:daily-brief') ? 'flex' : 'none';
     document.getElementById('navSopEngine').style.display = RBAC.can(currentProfile, 'page:sop-engine') ? 'flex' : 'none';
+    const ss = document.getElementById('navSectionScale'); if (ss) ss.style.display = (RBAC.can(currentProfile, 'page:client-os') || RBAC.can(currentProfile, 'page:content-auto')) ? 'block' : 'none';
     const tn = document.getElementById('navTeam'); if (tn) tn.style.display = RBAC.can(currentProfile, 'action:view-team') ? 'flex' : 'none';
     loadAllData();
 }
