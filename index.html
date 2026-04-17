@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f0f1a">
     <title>Horison AIOS</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -75,7 +79,54 @@
         .spinner-text { margin-top: 20px; color: #718096; }
         .app-container { display: none; }
         .app-container.active { display: flex; }
-        @media (max-width: 968px) { .login-left { display: none; } .login-right { flex: 1; } .sidebar { display: none; } .main { margin-left: 0 !important; } }
+        @media (max-width: 968px) {
+            .login-left { display: none; }
+            .login-right { flex: 1; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; position: fixed; z-index: 200; }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+            .sidebar-overlay.active { display: block; }
+            .main { margin-left: 0 !important; }
+            .topbar { padding: 12px 16px; }
+            .page-title { font-size: 16px; }
+            .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: #2d2d4e; border: none; border-radius: 8px; color: #e2e8f0; font-size: 18px; cursor: pointer; }
+            .user-info { display: none !important; }
+            .content { padding: 16px !important; }
+            .card { padding: 16px !important; }
+            .grid-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+            .grid-2 { grid-template-columns: 1fr !important; }
+            .stat-card { padding: 12px !important; }
+            .stat-value { font-size: 22px !important; }
+            .file-item { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+            .file-actions { width: 100%; display: flex; gap: 6px; }
+            .file-actions .btn { flex: 1; text-align: center; }
+            .modal { width: 95% !important; padding: 20px !important; max-height: 90vh !important; }
+            .card-title { font-size: 16px !important; }
+            .form-control { font-size: 16px !important; }
+            .btn { padding: 10px 16px !important; font-size: 14px !important; }
+            .upload-zone { padding: 20px !important; }
+            .toast { bottom: 16px; right: 16px; left: 16px; max-width: none; }
+            .dropdown-menu { right: 16px !important; }
+            .topbar-status { display: none !important; }
+        }
+        @media (max-width: 480px) {
+            .grid-4 { grid-template-columns: 1fr 1fr !important; }
+            .login-box { padding: 32px 24px !important; }
+            .topbar { padding: 10px 12px; }
+        }
+        @media (max-width: 968px) {
+            [style*="grid-template-columns: repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }
+            [style*="grid-template-columns: repeat(5"] { grid-template-columns: repeat(3, 1fr) !important; }
+            [style*="grid-template-columns: repeat(3"] { grid-template-columns: repeat(2, 1fr) !important; }
+            [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+            [style*="grid-template-columns: repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+            [style*="grid-template-columns: repeat(5"] { grid-template-columns: 1fr 1fr !important; }
+            [style*="grid-template-columns: repeat(3"] { grid-template-columns: 1fr !important; }
+            [style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
+        }
+        .mobile-menu-btn { display: none; }
         .sidebar { width: 260px; background: #1a1a2e; border-right: 1px solid #2d2d4e; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
         .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid #2d2d4e; }
         .sidebar-logo h1 { font-size: 20px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
@@ -255,9 +306,10 @@
         <div class="nav-item" data-page="content-auto" onclick="showPage('content-auto')">Content Automation</div>
     </nav>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 <!-- MAIN AREA -->
 <div class="main">
-<div class="topbar"><div class="page-title" id="pageTitle">Dashboard</div><div class="topbar-actions"><div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border-radius: 8px; font-size: 11px; color: #a0aec0; margin-right: 4px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: #48bb78; animation: pulse 2s infinite;"></div>System Online</div><div class="user-menu" onclick="toggleMenu()"><div class="user-avatar" id="userAvatar">?</div><div class="user-info"><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">...</div></div></div><div class="menu-button" id="menuButton" onclick="toggleMenu()"><div class="menu-bar"></div><div class="menu-bar"></div><div class="menu-bar"></div></div></div></div>
+<div class="topbar"><button class="mobile-menu-btn" onclick="toggleMobileSidebar()">&#9776;</button><div class="page-title" id="pageTitle">Dashboard</div><div class="topbar-actions"><div class="topbar-status" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border-radius: 8px; font-size: 11px; color: #a0aec0; margin-right: 4px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: #48bb78; animation: pulse 2s infinite;"></div>System Online</div><div class="user-menu" onclick="toggleMenu()"><div class="user-avatar" id="userAvatar">?</div><div class="user-info"><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">...</div></div></div><div class="menu-button" id="menuButton" onclick="toggleMenu()"><div class="menu-bar"></div><div class="menu-bar"></div><div class="menu-bar"></div></div></div></div>
 <div class="dropdown-menu" id="dropdownMenu"><div class="dropdown-section"><div class="dropdown-item" onclick="openSettings()"><span class="dropdown-text">Settings</span></div><div class="dropdown-item" onclick="openHelp()"><span class="dropdown-text">Help & Support</span></div></div><div class="dropdown-section"><div class="dropdown-item" onclick="logout()" style="color: #fc8181;"><span class="dropdown-text">Logout</span></div></div></div>
 <div class="content">
 <!-- HOME PAGE -->
@@ -530,6 +582,7 @@ function loginHistoryNext() { if (loginHistoryPage < Math.ceil(loginHistoryTotal
 // UI HELPERS
 // ============================================================
 function showPage(pageId) {
+    closeMobileSidebar();
     const perm = 'page:' + pageId; if (RBAC.permissions[perm] && !RBAC.can(currentProfile, perm)) { showToast('Access denied.', 'error'); return; }
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const page = document.getElementById('page-' + pageId); if (page) page.classList.add('active');
@@ -547,6 +600,8 @@ function hideAlert() { document.getElementById('loginAlert').style.display = 'no
 function showLoading(text) { document.getElementById('loadingText').textContent = text || 'Loading...'; document.getElementById('loadingOverlay').classList.add('active'); }
 function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
 function toggleMenu() { document.getElementById('dropdownMenu').classList.toggle('active'); }
+function toggleMobileSidebar() { document.querySelector('.sidebar').classList.toggle('mobile-open'); document.getElementById('sidebarOverlay').classList.toggle('active'); }
+function closeMobileSidebar() { document.querySelector('.sidebar').classList.remove('mobile-open'); document.getElementById('sidebarOverlay').classList.remove('active'); }
 document.addEventListener('click', (e) => { const m = document.getElementById('dropdownMenu'); const b = document.getElementById('menuButton'); const u = document.querySelector('.user-menu'); if (m && !m.contains(e.target) && !b?.contains(e.target) && !u?.contains(e.target)) m.classList.remove('active'); });
 function openSettings() { document.getElementById('settingsModal').classList.add('active'); document.getElementById('dropdownMenu').classList.remove('active'); if (currentUser) document.getElementById('profileEmail').textContent = currentUser.email; const as = document.getElementById('settingsApiKeySection'); if (as) { as.style.display = 'block'; updateApiKeyStatus(); } }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
