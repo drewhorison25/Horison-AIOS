@@ -87,12 +87,12 @@
         @media (max-width: 968px) {
             .login-left { display: none; }
             .login-right { flex: 1; }
-            .sidebar { transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: fixed; z-index: 200; will-change: transform; -webkit-backface-visibility: hidden; }
-            .sidebar.mobile-open { transform: translateX(0); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: fixed; top: 0; left: 0; height: 100%; z-index: 200; will-change: transform; -webkit-backface-visibility: hidden; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+            .sidebar.mobile-open { transform: translateX(0); }
             .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
             .sidebar-overlay.active { display: block; }
-            body.sidebar-open { overflow: hidden; position: fixed; width: 100%; }
-            .sidebar-close-btn { display: none; position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; background: #2d2d4e; border: none; border-radius: 8px; color: #e2e8f0; font-size: 20px; cursor: pointer; z-index: 210; align-items: center; justify-content: center; }
+            body.sidebar-open { overflow: hidden; }
+            .sidebar-close-btn { display: none; position: sticky; top: 12px; float: right; margin-right: 12px; width: 36px; height: 36px; background: #2d2d4e; border: none; border-radius: 8px; color: #e2e8f0; font-size: 20px; cursor: pointer; z-index: 210; align-items: center; justify-content: center; }
             .sidebar.mobile-open .sidebar-close-btn { display: flex; }
             .main { margin-left: 0 !important; }
             .topbar { padding: 12px 16px; }
@@ -140,7 +140,7 @@
         .sidebar-logo h1 { font-size: 20px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
         .sidebar-logo p { font-size: 11px; color: #4a5568; margin-top: 4px; }
         .nav-section { padding: 16px 16px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #4a5568; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; cursor: pointer; transition: all 0.2s; font-size: 14px; color: #718096; border-left: 3px solid transparent; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; cursor: pointer; transition: all 0.2s; font-size: 14px; color: #718096; border-left: 3px solid transparent; touch-action: manipulation; -webkit-tap-highlight-color: rgba(102,126,234,0.2); }
         .nav-item:hover { background: rgba(102, 126, 234, 0.1); color: #e2e8f0; }
         .nav-item.active { background: rgba(102, 126, 234, 0.15); color: #667eea; border-left-color: #667eea; }
         .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
@@ -153,7 +153,7 @@
         .user-info { display: flex; flex-direction: column; }
         .user-name { font-size: 13px; font-weight: 600; }
         .user-role { font-size: 11px; color: #718096; }
-        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; touch-action: manipulation; }
         .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-secondary { background: #2d2d4e; color: #e2e8f0; border: 1px solid #3d3d5e; }
@@ -499,6 +499,8 @@ function showApp() {
     const ss = document.getElementById('navSectionScale'); if (ss) ss.style.display = (RBAC.can(currentProfile, 'page:client-os') || RBAC.can(currentProfile, 'page:content-auto')) ? 'block' : 'none';
     const tn = document.getElementById('navTeam'); if (tn) tn.style.display = RBAC.can(currentProfile, 'action:view-team') ? 'flex' : 'none';
     loadAllData();
+    var hashPage = window.location.hash.replace('#', '');
+    if (hashPage && document.getElementById('page-' + hashPage)) { showPage(hashPage); } else { history.replaceState({ pageId: 'home' }, '', '#home'); }
 }
 
 async function loadAllData() { await Promise.all([loadDocuments(), loadTemplates(), loadStorageFiles(), loadTeam(), loadToolRequests(), loadAutomations(), loadApiConfigs()]); updateStats(); }
@@ -593,12 +595,15 @@ function loginHistoryNext() { if (loginHistoryPage < Math.ceil(loginHistoryTotal
 function showPage(pageId) {
     closeMobileSidebar();
     const perm = 'page:' + pageId; if (RBAC.permissions[perm] && !RBAC.can(currentProfile, perm)) { showToast('Access denied.', 'error'); return; }
+    if (!_navFromBack && _currentPageId !== pageId) { history.pushState({ pageId: pageId }, '', '#' + pageId); }
+    _currentPageId = pageId;
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const page = document.getElementById('page-' + pageId); if (page) page.classList.add('active');
     const titles = { 'home': 'Dashboard', 'ai-assistant': 'AI Assistant', 'documents': 'Documents', 'templates': 'Templates', 'automations': 'Automations', 'tools': 'Tool Builder', 'storage': 'Cloud Storage', 'team': 'Team & Permissions', 'user-management': 'Add New User', 'login-history': 'Login History', 'api-hub': 'API Hub', 'data-os': 'Data OS', 'comms-os': 'Communication OS', 'meeting-intel': 'Meeting Intelligence', 'daily-brief': 'Daily Brief', 'sop-engine': 'SOP Automation', 'performance-os': 'Performance OS', 'training-hub': 'Training Hub', 'ai-assistants': 'AI Assistants', 'productivity': 'Productivity OS', 'data-input': 'Data Input Portal', 'announcements': 'Announcements', 'client-os': 'Client OS', 'content-auto': 'Content Automation' };
     document.getElementById('pageTitle').textContent = titles[pageId] || pageId;
     document.querySelectorAll('.nav-item').forEach(item => { if (item.getAttribute('onclick') === "showPage('" + pageId + "')") item.classList.add('active'); });
     if (pageId === 'team') loadTeam(); if (pageId === 'login-history') loadLoginHistory(); if (pageId === 'storage') loadStorageFiles(); if (pageId === 'documents') loadDocuments(); if (pageId === 'templates') loadTemplates(); if (pageId === 'automations') loadAutomations(); if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); } if (pageId === 'api-hub') loadApiConfigs(); if (pageId === 'data-os') loadDataOs(); if (pageId === 'sop-engine') renderSopWorkflows(); if (pageId === 'meeting-intel') renderMeetingArchive(); if (pageId === 'comms-os') updateCommsStatus(); if (pageId === 'daily-brief') renderBriefHistory(); if (pageId === 'performance-os') renderPerfRoleCards(); if (pageId === 'training-hub') { renderTrainingPaths(); loadManagerTrainingView(); } if (pageId === 'ai-assistants') renderAiAssistants(); if (pageId === 'productivity') renderTasks(); if (pageId === 'data-input') updateInputHint(); if (pageId === 'announcements') { renderAnnouncements(); if (RBAC.isSuperuserOrAdmin(currentProfile)) document.getElementById('postAnnouncementBtn').style.display = 'block'; }
+    var ct = document.querySelector('.content'); if (ct) ct.scrollTop = 0; window.scrollTo(0, 0);
 }
 function togglePassword() { const i = document.getElementById('passwordInput'); i.type = i.type === 'password' ? 'text' : 'password'; }
 function toggleSignupPassword() { const i = document.getElementById('signupPassword'); i.type = i.type === 'password' ? 'text' : 'password'; }
@@ -612,26 +617,26 @@ function toggleMenu() { document.getElementById('dropdownMenu').classList.toggle
 function toggleMobileSidebar() {
     const sb = document.querySelector('.sidebar');
     const ov = document.getElementById('sidebarOverlay');
-    const isOpen = sb.classList.contains('mobile-open');
-    if (isOpen) {
+    if (sb.classList.contains('mobile-open')) {
         closeMobileSidebar();
     } else {
         sb.classList.add('mobile-open');
         ov.classList.add('active');
         document.body.classList.add('sidebar-open');
-        window._scrollY = window.scrollY;
-        history.pushState({ sidebar: true }, '');
     }
 }
 function closeMobileSidebar() {
     document.querySelector('.sidebar').classList.remove('mobile-open');
     document.getElementById('sidebarOverlay').classList.remove('active');
     document.body.classList.remove('sidebar-open');
-    if (window._scrollY !== undefined) window.scrollTo(0, window._scrollY);
 }
+let _currentPageId = 'home';
+let _navFromBack = false;
 window.addEventListener('popstate', function(e) {
-    if (document.querySelector('.sidebar.mobile-open')) {
-        closeMobileSidebar();
+    if (e.state && e.state.pageId) {
+        _navFromBack = true;
+        showPage(e.state.pageId);
+        _navFromBack = false;
     }
 });
 document.addEventListener('click', (e) => { const m = document.getElementById('dropdownMenu'); const b = document.getElementById('menuButton'); const u = document.querySelector('.user-menu'); if (m && !m.contains(e.target) && !b?.contains(e.target) && !u?.contains(e.target)) m.classList.remove('active'); });
