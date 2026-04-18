@@ -87,11 +87,13 @@
         @media (max-width: 968px) {
             .login-left { display: none; }
             .login-right { flex: 1; }
-            .sidebar { transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: fixed; top: 0; left: 0; height: 100%; z-index: 200; will-change: transform; -webkit-backface-visibility: hidden; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); position: fixed; top: 0; left: 0; bottom: 0; width: 260px; z-index: 200; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
             .sidebar.mobile-open { transform: translateX(0); }
+            .sidebar nav { padding-bottom: 100px; }
             .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
             .sidebar-overlay.active { display: block; }
-            body.sidebar-open { overflow: hidden; }
+            body.sidebar-open { overflow: hidden; touch-action: none; }
+            body.sidebar-open .sidebar { touch-action: pan-y; }
             .sidebar-close-btn { display: none; position: sticky; top: 12px; float: right; margin-right: 12px; width: 36px; height: 36px; background: #2d2d4e; border: none; border-radius: 8px; color: #e2e8f0; font-size: 20px; cursor: pointer; z-index: 210; align-items: center; justify-content: center; }
             .sidebar.mobile-open .sidebar-close-btn { display: flex; }
             .main { margin-left: 0 !important; }
@@ -623,6 +625,7 @@ function toggleMobileSidebar() {
         sb.classList.add('mobile-open');
         ov.classList.add('active');
         document.body.classList.add('sidebar-open');
+        sb.scrollTop = 0;
     }
 }
 function closeMobileSidebar() {
@@ -630,6 +633,15 @@ function closeMobileSidebar() {
     document.getElementById('sidebarOverlay').classList.remove('active');
     document.body.classList.remove('sidebar-open');
 }
+(function() {
+    var sidebar = null;
+    document.addEventListener('touchmove', function(e) {
+        if (!document.body.classList.contains('sidebar-open')) return;
+        if (!sidebar) sidebar = document.querySelector('.sidebar');
+        if (sidebar && sidebar.contains(e.target)) return;
+        e.preventDefault();
+    }, { passive: false });
+})();
 let _currentPageId = 'home';
 let _navFromBack = false;
 window.addEventListener('popstate', function(e) {
