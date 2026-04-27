@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f0f1a">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://bbymjzkunlkwysfhwlzl.supabase.co" crossorigin>
+    <link rel="preconnect" href="https://maxjzddbgtsrsxrnjrfi.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://api.anthropic.com">
     <title>Horison AIOS</title>
     <!-- Supabase JS Client -->
@@ -402,8 +402,8 @@
 // ============================================================
 // SUPABASE INITIALIZATION
 // ============================================================
-const SUPABASE_URL = 'https://bbymjzkunlkwysfhwlzl.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieW1qemt1bmxrd3lzZmh3bHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTYxMTYsImV4cCI6MjA4ODk5MjExNn0.pCxF8HriNi8UxydBJukZdjYv4s1tUSXyCLpGz55l6WE';
+const SUPABASE_URL = 'https://maxjzddbgtsrsxrnjrfi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1heGp6ZGRiZ3RzcnN4cm5qcmZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNjYwOTQsImV4cCI6MjA5Mjg0MjA5NH0.InuwywpQziZx4YQCrIbLXnkL3y27JbdPNmTRYEtTeAI';
 let sb;
 try { if (window.supabase && window.supabase.createClient) { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } else { throw new Error('Supabase library not loaded'); }
 } catch (e) { console.error('Supabase init failed:', e); document.addEventListener('DOMContentLoaded', () => { const a = document.getElementById('loginAlert'); if (a) { a.textContent = 'Failed to connect to cloud. Please refresh.'; a.style.display = 'block'; } }); }
