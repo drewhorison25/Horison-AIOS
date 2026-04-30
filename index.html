@@ -405,7 +405,7 @@
 const SUPABASE_URL = 'https://maxjzddbgtsrsxrnjrfi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1heGp6ZGRiZ3RzcnN4cm5qcmZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNjYwOTQsImV4cCI6MjA5Mjg0MjA5NH0.InuwywpQziZx4YQCrIbLXnkL3y27JbdPNmTRYEtTeAI';
 let sb;
-try { if (window.supabase && window.supabase.createClient) { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } else { throw new Error('Supabase library not loaded'); }
+try { if (window.supabase && window.supabase.createClient) { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, storageKey: 'aios-auth', storage: window.sessionStorage } }); } else { throw new Error('Supabase library not loaded'); }
 } catch (e) { console.error('Supabase init failed:', e); document.addEventListener('DOMContentLoaded', () => { const a = document.getElementById('loginAlert'); if (a) { a.textContent = 'Failed to connect to cloud. Please refresh.'; a.style.display = 'block'; } }); }
 
 let currentUser = null; let currentProfile = null;
