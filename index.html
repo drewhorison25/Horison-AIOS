@@ -619,6 +619,7 @@ function toggleMobileSidebar() {
     } else {
         sb.classList.add('mobile-open');
         sb.scrollTop = 0;
+        history.pushState({ sidebar: true }, '');
     }
 }
 function closeMobileSidebar() {
@@ -648,6 +649,11 @@ function closeMobileSidebar() {
 let _currentPageId = 'home';
 let _navFromBack = false;
 window.addEventListener('popstate', function(e) {
+    var sb = document.querySelector('.sidebar');
+    if (sb && sb.classList.contains('mobile-open')) {
+        closeMobileSidebar();
+        return;
+    }
     if (e.state && e.state.pageId) {
         _navFromBack = true;
         showPage(e.state.pageId);
