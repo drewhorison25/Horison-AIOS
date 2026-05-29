@@ -13,6 +13,7 @@
     <title>Horison AIOS</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -99,6 +100,7 @@
             .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: #2d2d4e; border: none; border-radius: 8px; color: #e2e8f0; font-size: 18px; cursor: pointer; }
             .api-hub-grid { grid-template-columns: 1fr !important; }
             .tool-library-grid { grid-template-columns: 1fr !important; }
+            .dashboard-charts-grid { grid-template-columns: 1fr !important; }
             .user-info { display: none !important; }
             .menu-button { display: none !important; }
             .user-menu { cursor: pointer; }
@@ -119,6 +121,11 @@
             .toast { bottom: 16px; right: 16px; left: 16px; max-width: none; }
             .dropdown-menu { right: 16px !important; }
             .topbar-status { display: none !important; }
+            .global-search input { width: 120px; font-size: 12px; padding: 6px 10px 6px 30px; }
+            .notif-panel { right: 10px; left: 10px; width: auto; }
+            .search-results-panel { left: 10px; right: 10px; width: auto; transform: none; }
+            .cal-day { min-height: 50px; }
+            .cal-event { font-size: 9px; }
         }
         @media (max-width: 480px) {
             .grid-4 { grid-template-columns: 1fr 1fr !important; }
@@ -138,6 +145,38 @@
             [style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
         }
         .mobile-menu-btn { display: none; }
+        /* NOTIFICATION BELL */
+        .notif-bell { position: relative; cursor: pointer; padding: 8px; border-radius: 8px; transition: background 0.2s; }
+        .notif-bell:hover { background: #2d2d4e; }
+        .notif-bell svg { width: 20px; height: 20px; fill: none; stroke: #a0aec0; stroke-width: 2; }
+        .notif-badge { position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; background: #fc8181; border-radius: 50%; font-size: 9px; font-weight: 700; color: white; display: flex; align-items: center; justify-content: center; }
+        .notif-panel { position: fixed; top: 55px; right: 80px; width: 360px; max-height: 480px; background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 5000; display: none; overflow: hidden; }
+        .notif-panel.active { display: block; }
+        .notif-panel-header { padding: 14px 16px; border-bottom: 1px solid #2d2d4e; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; }
+        .notif-item { padding: 12px 16px; border-bottom: 1px solid rgba(45,45,78,0.4); cursor: pointer; transition: background 0.15s; }
+        .notif-item:hover { background: rgba(102,126,234,0.08); }
+        .notif-item.unread { border-left: 3px solid #667eea; }
+        .notif-time { font-size: 11px; color: #4a5568; margin-top: 4px; }
+        /* GLOBAL SEARCH */
+        .global-search { position: relative; }
+        .global-search input { background: #0f0f1a; border: 1px solid #2d2d4e; border-radius: 8px; padding: 8px 14px 8px 34px; color: #e2e8f0; font-size: 13px; width: 220px; outline: none; transition: border 0.2s; }
+        .global-search input:focus { border-color: #667eea; }
+        .global-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: #4a5568; fill: none; stroke-width: 2; }
+        .search-results-panel { position: fixed; top: 55px; left: 50%; transform: translateX(-50%); width: 500px; max-height: 480px; background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 5000; display: none; overflow-y: auto; }
+        .search-results-panel.active { display: block; }
+        .search-result-item { padding: 12px 16px; border-bottom: 1px solid rgba(45,45,78,0.4); cursor: pointer; transition: background 0.15s; }
+        .search-result-item:hover { background: rgba(102,126,234,0.08); }
+        /* CALENDAR */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-header { padding: 8px; text-align: center; font-size: 11px; font-weight: 600; color: #667eea; text-transform: uppercase; }
+        .cal-day { min-height: 80px; background: #0f0f1a; border-radius: 6px; padding: 6px; font-size: 12px; }
+        .cal-day.today { border: 1px solid #667eea; }
+        .cal-day.other-month { opacity: 0.3; }
+        .cal-day-num { font-weight: 600; color: #a0aec0; margin-bottom: 4px; }
+        .cal-event { font-size: 10px; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-event.task { background: rgba(102,126,234,0.2); color: #667eea; }
+        .cal-event.meeting { background: rgba(72,187,120,0.2); color: #48bb78; }
+        .cal-event.sop { background: rgba(237,137,54,0.2); color: #ed8936; }
         .sidebar { width: 260px; background: #1a1a2e; border-right: 1px solid #2d2d4e; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
         .sidebar-logo { padding: 28px 20px; border-bottom: 1px solid #2d2d4e; text-align: center; }
         .sidebar-logo h1 { font-size: 26px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
@@ -287,6 +326,8 @@
     <nav>
         <div class="nav-section">Dashboard</div>
         <div class="nav-item active" data-page="home" onclick="showPage('home')">Home</div>
+        <div class="nav-item" data-page="activity-feed" onclick="showPage('activity-feed')">Activity Feed</div>
+        <div class="nav-item" data-page="calendar" onclick="showPage('calendar')">Calendar</div>
         <div class="nav-section">CORE FEATURES</div>
         <div class="nav-item" data-page="ai-assistant" onclick="showPage('ai-assistant')">AI Assistant</div>
         <div class="nav-item" data-page="documents" onclick="showPage('documents')">Documents</div>
@@ -320,13 +361,32 @@
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 <!-- MAIN AREA -->
 <div class="main">
-<div class="topbar"><button class="mobile-menu-btn" onclick="toggleMobileSidebar()">&#9776;</button><div class="page-title" id="pageTitle">Dashboard</div><div class="topbar-actions"><div class="topbar-status" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border-radius: 8px; font-size: 11px; color: #a0aec0; margin-right: 4px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: #48bb78; animation: pulse 2s infinite;"></div>System Online</div><div class="user-menu" onclick="toggleMenu()"><div class="user-avatar" id="userAvatar">?</div><div class="user-info"><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">...</div></div></div><div class="menu-button" id="menuButton" onclick="toggleMenu()"><div class="menu-bar"></div><div class="menu-bar"></div><div class="menu-bar"></div></div></div></div>
+<div class="topbar"><button class="mobile-menu-btn" onclick="toggleMobileSidebar()">&#9776;</button><div class="page-title" id="pageTitle">Dashboard</div><div class="topbar-actions"><div class="global-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="globalSearchInput" placeholder="Search..." onkeyup="handleGlobalSearch(event)" onfocus="handleGlobalSearch(event)"></div><div class="notif-bell" onclick="toggleNotifPanel()"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><div class="notif-badge" id="notifBadge" style="display:none;">0</div></div><div class="topbar-status" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border-radius: 8px; font-size: 11px; color: #a0aec0; margin-right: 4px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: #48bb78; animation: pulse 2s infinite;"></div>System Online</div><div class="user-menu" onclick="toggleMenu()"><div class="user-avatar" id="userAvatar">?</div><div class="user-info"><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">...</div></div></div><div class="menu-button" id="menuButton" onclick="toggleMenu()"><div class="menu-bar"></div><div class="menu-bar"></div><div class="menu-bar"></div></div></div></div>
 <div class="dropdown-menu" id="dropdownMenu"><div class="dropdown-section"><div class="dropdown-item" onclick="openSettings()"><span class="dropdown-text">Settings</span></div><div class="dropdown-item" onclick="openHelp()"><span class="dropdown-text">Help & Support</span></div></div><div class="dropdown-section"><div class="dropdown-item" onclick="logout()" style="color: #fc8181;"><span class="dropdown-text">Logout</span></div></div></div>
+<div class="notif-panel" id="notifPanel"><div class="notif-panel-header"><span>Notifications</span><button onclick="markAllNotifRead()" style="background:none;border:none;color:#667eea;font-size:12px;cursor:pointer;font-weight:600;">Mark all read</button></div><div id="notifList" style="overflow-y:auto;max-height:400px;"><p style="color:#718096;text-align:center;padding:20px;font-size:13px;">No notifications yet.</p></div></div>
+<div class="search-results-panel" id="searchResultsPanel"><div style="padding:14px 16px;border-bottom:1px solid #2d2d4e;font-weight:600;font-size:14px;">Search Results</div><div id="searchResultsList" style="overflow-y:auto;max-height:400px;"></div></div>
 <div class="content">
 <!-- HOME PAGE -->
 <div class="page active" id="page-home">
 <div class="grid-4" style="margin-bottom: 24px;"><div class="stat-card"><div class="stat-value" id="statDocs">0</div><div class="stat-label">Documents</div></div><div class="stat-card"><div class="stat-value" id="statTemplates">0</div><div class="stat-label">Templates</div></div><div class="stat-card"><div class="stat-value" id="statAutomations">0</div><div class="stat-label">Automations</div></div><div class="stat-card"><div class="stat-value" id="statFiles">0</div><div class="stat-label">Cloud Files</div></div></div>
+<!-- DASHBOARD CHARTS -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;" class="dashboard-charts-grid">
+<div class="card" style="padding:20px;"><div class="card-title" style="margin-bottom:16px;">Tasks by Status</div><canvas id="chartTaskStatus" height="200"></canvas></div>
+<div class="card" style="padding:20px;"><div class="card-title" style="margin-bottom:16px;">Client Health Distribution</div><canvas id="chartClientHealth" height="200"></canvas></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;" class="dashboard-charts-grid">
+<div class="card" style="padding:20px;"><div class="card-title" style="margin-bottom:16px;">Login Activity (7 days)</div><canvas id="chartLoginActivity" height="200"></canvas></div>
+<div class="card" style="padding:20px;"><div class="card-title" style="margin-bottom:16px;">Revenue by Client</div><canvas id="chartRevenue" height="200"></canvas></div>
+</div>
 <div class="card"><div class="card-title">Quick Actions</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"><button class="btn btn-primary" onclick="showPage('ai-assistant')" style="width: 100%;">Open AI Assistant</button><button class="btn btn-secondary" onclick="showPage('documents')" style="width: 100%;">Add Document</button><button class="btn btn-secondary" onclick="showPage('storage')" style="width: 100%;">Cloud Storage</button><button class="btn btn-secondary" onclick="showPage('templates')" style="width: 100%;">Create Template</button></div></div>
+</div>
+<!-- ACTIVITY FEED PAGE -->
+<div class="page" id="page-activity-feed">
+<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">Activity Feed<button class="btn btn-sm btn-secondary" onclick="loadActivityFeed()">Refresh</button></div><div id="activityFeedList"><p style="color:#718096;text-align:center;padding:20px;">Loading activity...</p></div></div>
+</div>
+<!-- CALENDAR PAGE -->
+<div class="page" id="page-calendar">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><button class="btn btn-sm btn-secondary" onclick="calNavMonth(-1)">&larr; Prev</button><div class="card-title" id="calMonthTitle" style="margin:0;">May 2026</div><button class="btn btn-sm btn-secondary" onclick="calNavMonth(1)">Next &rarr;</button></div><div class="cal-grid"><div class="cal-header">Sun</div><div class="cal-header">Mon</div><div class="cal-header">Tue</div><div class="cal-header">Wed</div><div class="cal-header">Thu</div><div class="cal-header">Fri</div><div class="cal-header">Sat</div></div><div class="cal-grid" id="calendarGrid"></div></div>
 </div>
 <!-- AI ASSISTANT PAGE -->
 <div class="page" id="page-ai-assistant">
@@ -424,7 +484,7 @@ const RBAC = {
     isSuperuserOrAdmin(p) { return this.isSuperuser(p) || this.isAdmin(p); },
     isManagerOrAbove(p) { return this.isManager(p) || this.isSuperuserOrAdmin(p); },
     permissions: {
-        'page:home': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistant': { minPrimary: 'user', minSub: 'regular' }, 'page:documents': { minPrimary: 'user', minSub: 'regular' }, 'page:templates': { minPrimary: 'user', minSub: 'regular' }, 'page:automations': { minPrimary: 'user', minSub: 'regular' }, 'page:tools': { minPrimary: 'user', minSub: 'regular' }, 'page:storage': { minPrimary: 'user', minSub: 'regular' }, 'page:team': { minPrimary: 'user', minSub: 'regular' }, 'page:user-management': { minPrimary: 'admin', minSub: 'regular' }, 'page:login-history': { minPrimary: 'admin', minSub: 'regular' }, 'page:api-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:comms-os': { minPrimary: 'user', minSub: 'regular' }, 'page:meeting-intel': { minPrimary: 'user', minSub: 'regular' }, 'page:daily-brief': { minPrimary: 'user', minSub: 'manager' }, 'page:sop-engine': { minPrimary: 'user', minSub: 'manager' }, 'page:performance-os': { minPrimary: 'user', minSub: 'regular' }, 'page:training-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistants': { minPrimary: 'user', minSub: 'regular' }, 'page:productivity': { minPrimary: 'user', minSub: 'regular' }, 'page:data-input': { minPrimary: 'user', minSub: 'regular' }, 'page:announcements': { minPrimary: 'user', minSub: 'regular' }, 'page:system-config': { minPrimary: 'superuser', minSub: 'regular' }, 'page:data-os': { minPrimary: 'admin', minSub: 'regular' }, 'page:client-os': { minPrimary: 'user', minSub: 'manager' }, 'page:content-auto': { minPrimary: 'user', minSub: 'manager' },
+        'page:home': { minPrimary: 'user', minSub: 'regular' }, 'page:activity-feed': { minPrimary: 'user', minSub: 'regular' }, 'page:calendar': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistant': { minPrimary: 'user', minSub: 'regular' }, 'page:documents': { minPrimary: 'user', minSub: 'regular' }, 'page:templates': { minPrimary: 'user', minSub: 'regular' }, 'page:automations': { minPrimary: 'user', minSub: 'regular' }, 'page:tools': { minPrimary: 'user', minSub: 'regular' }, 'page:storage': { minPrimary: 'user', minSub: 'regular' }, 'page:team': { minPrimary: 'user', minSub: 'regular' }, 'page:user-management': { minPrimary: 'admin', minSub: 'regular' }, 'page:login-history': { minPrimary: 'admin', minSub: 'regular' }, 'page:api-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:comms-os': { minPrimary: 'user', minSub: 'regular' }, 'page:meeting-intel': { minPrimary: 'user', minSub: 'regular' }, 'page:daily-brief': { minPrimary: 'user', minSub: 'manager' }, 'page:sop-engine': { minPrimary: 'user', minSub: 'manager' }, 'page:performance-os': { minPrimary: 'user', minSub: 'regular' }, 'page:training-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistants': { minPrimary: 'user', minSub: 'regular' }, 'page:productivity': { minPrimary: 'user', minSub: 'regular' }, 'page:data-input': { minPrimary: 'user', minSub: 'regular' }, 'page:announcements': { minPrimary: 'user', minSub: 'regular' }, 'page:system-config': { minPrimary: 'superuser', minSub: 'regular' }, 'page:data-os': { minPrimary: 'admin', minSub: 'regular' }, 'page:client-os': { minPrimary: 'user', minSub: 'manager' }, 'page:content-auto': { minPrimary: 'user', minSub: 'manager' },
         'action:create-document': { minPrimary: 'user', minSub: 'regular' }, 'action:delete-document': { minPrimary: 'user', minSub: 'regular' }, 'action:create-template': { minPrimary: 'user', minSub: 'regular' }, 'action:delete-template': { minPrimary: 'user', minSub: 'regular' }, 'action:create-automation': { minPrimary: 'user', minSub: 'manager' }, 'action:upload-file': { minPrimary: 'user', minSub: 'regular' }, 'action:delete-file': { minPrimary: 'user', minSub: 'regular' }, 'action:create-user': { minPrimary: 'admin', minSub: 'regular' }, 'action:change-role': { minPrimary: 'admin', minSub: 'regular' }, 'action:view-login-history': { minPrimary: 'admin', minSub: 'regular' }, 'action:export-data': { minPrimary: 'user', minSub: 'regular' }, 'action:view-team': { minPrimary: 'user', minSub: 'regular' }, 'action:manage-team': { minPrimary: 'user', minSub: 'manager' },
     },
     primaryRank: { 'user': 1, 'admin': 2, 'superuser': 3 }, subRank: { 'regular': 1, 'manager': 2 },
@@ -614,7 +674,7 @@ function showPage(pageId) {
     const titles = { 'home': 'Dashboard', 'ai-assistant': 'AI Assistant', 'documents': 'Documents', 'templates': 'Templates', 'automations': 'Automations', 'tools': 'Tool Builder', 'storage': 'Cloud Storage', 'team': 'Team & Permissions', 'user-management': 'Add New User', 'login-history': 'Login History', 'api-hub': 'API Hub', 'data-os': 'Data OS', 'comms-os': 'Communication OS', 'meeting-intel': 'Meeting Intelligence', 'daily-brief': 'Daily Brief', 'sop-engine': 'SOP Automation', 'performance-os': 'Performance OS', 'training-hub': 'Training Hub', 'ai-assistants': 'AI Assistants', 'productivity': 'Productivity OS', 'data-input': 'Data Input Portal', 'announcements': 'Announcements', 'client-os': 'Client OS', 'content-auto': 'Content Automation' };
     document.getElementById('pageTitle').textContent = titles[pageId] || pageId;
     document.querySelectorAll('.nav-item').forEach(item => { if (item.getAttribute('onclick') === "showPage('" + pageId + "')") item.classList.add('active'); });
-    if (pageId === 'team') loadTeam(); if (pageId === 'login-history') loadLoginHistory(); if (pageId === 'storage') loadStorageFiles(); if (pageId === 'documents') loadDocuments(); if (pageId === 'templates') loadTemplates(); if (pageId === 'automations') loadAutomations(); if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); } if (pageId === 'api-hub') loadApiConfigs(); if (pageId === 'data-os') loadDataOs(); if (pageId === 'sop-engine') renderSopWorkflows(); if (pageId === 'meeting-intel') renderMeetingArchive(); if (pageId === 'comms-os') updateCommsStatus(); if (pageId === 'daily-brief') renderBriefHistory(); if (pageId === 'performance-os') renderPerfRoleCards(); if (pageId === 'training-hub') { renderTrainingPaths(); loadManagerTrainingView(); } if (pageId === 'ai-assistants') renderAiAssistants(); if (pageId === 'productivity') renderTasks(); if (pageId === 'data-input') updateInputHint(); if (pageId === 'announcements') { renderAnnouncements(); if (RBAC.isSuperuserOrAdmin(currentProfile)) document.getElementById('postAnnouncementBtn').style.display = 'block'; }
+    if (pageId === 'team') loadTeam(); if (pageId === 'login-history') loadLoginHistory(); if (pageId === 'storage') loadStorageFiles(); if (pageId === 'documents') loadDocuments(); if (pageId === 'templates') loadTemplates(); if (pageId === 'automations') loadAutomations(); if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); } if (pageId === 'api-hub') loadApiConfigs(); if (pageId === 'data-os') loadDataOs(); if (pageId === 'sop-engine') renderSopWorkflows(); if (pageId === 'meeting-intel') renderMeetingArchive(); if (pageId === 'comms-os') updateCommsStatus(); if (pageId === 'daily-brief') renderBriefHistory(); if (pageId === 'performance-os') renderPerfRoleCards(); if (pageId === 'training-hub') { renderTrainingPaths(); loadManagerTrainingView(); } if (pageId === 'ai-assistants') renderAiAssistants(); if (pageId === 'productivity') renderTasks(); if (pageId === 'data-input') updateInputHint(); if (pageId === 'home') loadDashboardCharts(); if (pageId === 'activity-feed') loadActivityFeed(); if (pageId === 'calendar') renderCalendar(); if (pageId === 'announcements') { renderAnnouncements(); if (RBAC.isSuperuserOrAdmin(currentProfile)) document.getElementById('postAnnouncementBtn').style.display = 'block'; }
     var ct = document.querySelector('.content'); if (ct) ct.scrollTop = 0; window.scrollTo(0, 0);
 }
 function togglePassword() { const i = document.getElementById('passwordInput'); i.type = i.type === 'password' ? 'text' : 'password'; }
@@ -1167,6 +1227,191 @@ async function loadManagerTrainingView() {
             return '<div style="background:#0f0f1a;padding:12px 14px;border-radius:8px;border:1px solid #2d2d4e;display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">' + (m.avatar || '?') + '</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.name || m.email) + '</div><div style="font-size:10px;color:#718096;">' + escapeHtml(m.dept || 'N/A') + ' · ' + RBAC.getDisplayLabel(m.access_level) + '</div></div><div style="width:120px;flex-shrink:0;"><div style="display:flex;justify-content:space-between;font-size:10px;color:#a0aec0;margin-bottom:3px;"><span>' + completedCount + '/' + assignedCount + ' modules</span><span>' + pct + '%</span></div><div style="height:6px;background:#2d2d4e;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width 0.3s;"></div></div></div></div>';
         }).join('') + '</div>';
     } catch(e) { container.innerHTML = '<p style="color:#fc8181;">Unable to load progress. Please try again.</p>'; }
+}
+
+// ============================================================
+// FEATURE 1: NOTIFICATION CENTER
+// ============================================================
+var notifications = [];
+function toggleNotifPanel() { var p = document.getElementById('notifPanel'); var s = document.getElementById('searchResultsPanel'); if (s) s.classList.remove('active'); p.classList.toggle('active'); if (p.classList.contains('active')) loadNotifications(); }
+async function loadNotifications() {
+    notifications = [];
+    try {
+        var [tasks, anns, tools] = await Promise.all([
+            sb.from('tasks').select('*').eq('assigned_to', currentUser?.email).eq('status', 'todo').order('created_at', { ascending: false }).limit(5),
+            sb.from('announcements').select('*').order('created_at', { ascending: false }).limit(5),
+            sb.from('tool_requests').select('*').in('dev_status', ['live','pending']).order('created_at', { ascending: false }).limit(5)
+        ]);
+        (tasks.data || []).forEach(function(t) { notifications.push({ type: 'task', title: 'Task assigned: ' + t.title, detail: 'Priority: ' + t.priority, time: t.created_at, page: 'productivity' }); });
+        (anns.data || []).forEach(function(a) { notifications.push({ type: 'announcement', title: a.title, detail: a.type, time: a.created_at, page: 'announcements' }); });
+        (tools.data || []).forEach(function(t) { notifications.push({ type: 'tool', title: t.name + (t.dev_status === 'live' ? ' — Built!' : ' — Pending'), detail: 'Tool Builder', time: t.created_at, page: 'tools' }); });
+        notifications.sort(function(a, b) { return new Date(b.time) - new Date(a.time); });
+    } catch(e) { console.warn('Notif load error:', e); }
+    renderNotifications();
+}
+function renderNotifications() {
+    var list = document.getElementById('notifList');
+    var badge = document.getElementById('notifBadge');
+    if (notifications.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;font-size:13px;">No notifications.</p>'; badge.style.display = 'none'; return; }
+    badge.textContent = notifications.length; badge.style.display = 'flex';
+    var icons = { task: '&#9745;', announcement: '&#128227;', tool: '&#9881;' };
+    list.innerHTML = notifications.map(function(n) { return '<div class="notif-item unread" onclick="showPage(\'' + n.page + '\');document.getElementById(\'notifPanel\').classList.remove(\'active\');"><div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:16px;">' + (icons[n.type] || '') + '</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(n.title) + '</div><div style="font-size:11px;color:#718096;">' + escapeHtml(n.detail) + '</div><div class="notif-time">' + timeAgo(n.time) + '</div></div></div></div>'; }).join('');
+}
+function markAllNotifRead() { notifications = []; renderNotifications(); document.getElementById('notifPanel').classList.remove('active'); showToast('All notifications cleared', 'info'); }
+
+// ============================================================
+// FEATURE 2: ACTIVITY FEED
+// ============================================================
+async function loadActivityFeed() {
+    var list = document.getElementById('activityFeedList');
+    list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;">Loading activity...</p>';
+    var feed = [];
+    try {
+        var [logins, docs, tasks, anns, meetings, sops, clients] = await Promise.all([
+            sb.from('login_history').select('*').order('created_at', { ascending: false }).limit(10),
+            sb.from('documents').select('*').order('created_at', { ascending: false }).limit(10),
+            sb.from('tasks').select('*').order('created_at', { ascending: false }).limit(10),
+            sb.from('announcements').select('*').order('created_at', { ascending: false }).limit(5),
+            sb.from('meetings').select('id,title,created_at,created_by').order('created_at', { ascending: false }).limit(5),
+            sb.from('sop_logs').select('*').order('created_at', { ascending: false }).limit(5),
+            sb.from('clients').select('id,brand_name,created_at').order('created_at', { ascending: false }).limit(5)
+        ]);
+        (logins.data || []).forEach(function(e) { feed.push({ icon: '&#128100;', color: e.status === 'Logged In' ? '#48bb78' : e.status === 'Failed' ? '#fc8181' : '#ed8936', text: (e.name || e.email) + ' ' + (e.status || 'logged in'), detail: e.device + ' / ' + e.browser, time: e.created_at }); });
+        (docs.data || []).forEach(function(e) { feed.push({ icon: '&#128196;', color: '#667eea', text: 'Document created: ' + e.title, detail: e.user_email || '', time: e.created_at }); });
+        (tasks.data || []).forEach(function(e) { feed.push({ icon: '&#9745;', color: '#764ba2', text: 'Task: ' + e.title, detail: e.priority + ' priority · ' + e.status, time: e.created_at }); });
+        (anns.data || []).forEach(function(e) { feed.push({ icon: '&#128227;', color: '#ed8936', text: 'Announcement: ' + e.title, detail: 'Posted by ' + e.posted_by, time: e.created_at }); });
+        (meetings.data || []).forEach(function(e) { feed.push({ icon: '&#127908;', color: '#48bb78', text: 'Meeting: ' + e.title, detail: e.created_by || '', time: e.created_at }); });
+        (sops.data || []).forEach(function(e) { feed.push({ icon: '&#9881;', color: '#f56565', text: 'SOP executed: ' + e.sop_name, detail: e.status + ' · ' + e.run_by, time: e.created_at }); });
+        (clients.data || []).forEach(function(e) { feed.push({ icon: '&#127970;', color: '#38b2ac', text: 'Client added: ' + e.brand_name, detail: '', time: e.created_at }); });
+        feed.sort(function(a, b) { return new Date(b.time) - new Date(a.time); });
+    } catch(e) { console.warn('Feed error:', e); }
+    if (feed.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;">No recent activity.</p>'; return; }
+    list.innerHTML = feed.slice(0, 30).map(function(f) {
+        return '<div style="display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid rgba(45,45,78,0.4);"><div style="width:36px;height:36px;min-width:36px;border-radius:50%;background:' + f.color + '22;display:flex;align-items:center;justify-content:center;font-size:16px;">' + f.icon + '</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#e2e8f0;">' + escapeHtml(f.text) + '</div><div style="font-size:11px;color:#718096;">' + escapeHtml(f.detail) + '</div></div><div style="font-size:11px;color:#4a5568;white-space:nowrap;">' + timeAgo(f.time) + '</div></div>';
+    }).join('');
+}
+
+// ============================================================
+// FEATURE 3: GLOBAL SEARCH
+// ============================================================
+var _searchTimeout = null;
+function handleGlobalSearch(e) {
+    var q = document.getElementById('globalSearchInput').value.trim();
+    var panel = document.getElementById('searchResultsPanel');
+    var notifP = document.getElementById('notifPanel');
+    if (notifP) notifP.classList.remove('active');
+    if (q.length < 2) { panel.classList.remove('active'); return; }
+    clearTimeout(_searchTimeout);
+    _searchTimeout = setTimeout(function() { performGlobalSearch(q); }, 300);
+}
+async function performGlobalSearch(q) {
+    var panel = document.getElementById('searchResultsPanel');
+    var list = document.getElementById('searchResultsList');
+    panel.classList.add('active');
+    list.innerHTML = '<p style="color:#718096;text-align:center;padding:16px;">Searching...</p>';
+    var results = [];
+    try {
+        var ql = '%' + q + '%';
+        var [docs, tpls, tasks, clients, anns, meetings] = await Promise.all([
+            sb.from('documents').select('id,title,category,created_at').ilike('title', ql).limit(5),
+            sb.from('templates').select('id,name,category,created_at').ilike('name', ql).limit(5),
+            sb.from('tasks').select('id,title,status,created_at').ilike('title', ql).limit(5),
+            sb.from('clients').select('id,brand_name,service_type,created_at').ilike('brand_name', ql).limit(5),
+            sb.from('announcements').select('id,title,type,created_at').ilike('title', ql).limit(5),
+            sb.from('meetings').select('id,title,created_at').ilike('title', ql).limit(5)
+        ]);
+        (docs.data || []).forEach(function(d) { results.push({ title: d.title, type: 'Document', badge: 'badge-blue', page: 'documents', time: d.created_at }); });
+        (tpls.data || []).forEach(function(t) { results.push({ title: t.name, type: 'Template', badge: 'badge-purple', page: 'templates', time: t.created_at }); });
+        (tasks.data || []).forEach(function(t) { results.push({ title: t.title, type: 'Task (' + t.status + ')', badge: 'badge-yellow', page: 'productivity', time: t.created_at }); });
+        (clients.data || []).forEach(function(c) { results.push({ title: c.brand_name, type: 'Client', badge: 'badge-green', page: 'client-os', time: c.created_at }); });
+        (anns.data || []).forEach(function(a) { results.push({ title: a.title, type: 'Announcement', badge: 'badge-red', page: 'announcements', time: a.created_at }); });
+        (meetings.data || []).forEach(function(m) { results.push({ title: m.title, type: 'Meeting', badge: 'badge-gray', page: 'meeting-intel', time: m.created_at }); });
+    } catch(e) { console.warn('Search error:', e); }
+    if (results.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:16px;">No results for "' + escapeHtml(q) + '"</p>'; return; }
+    list.innerHTML = results.map(function(r) {
+        return '<div class="search-result-item" onclick="showPage(\'' + r.page + '\');document.getElementById(\'searchResultsPanel\').classList.remove(\'active\');document.getElementById(\'globalSearchInput\').value=\'\';"><div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:13px;font-weight:600;color:#e2e8f0;">' + escapeHtml(r.title) + '</div><span class="badge ' + r.badge + '" style="font-size:10px;">' + r.type + '</span></div><div style="font-size:11px;color:#4a5568;margin-top:4px;">' + timeAgo(r.time) + '</div></div>';
+    }).join('');
+}
+document.addEventListener('click', function(e) { if (!e.target.closest('.global-search') && !e.target.closest('.search-results-panel')) { var p = document.getElementById('searchResultsPanel'); if (p) p.classList.remove('active'); } if (!e.target.closest('.notif-bell') && !e.target.closest('.notif-panel')) { var n = document.getElementById('notifPanel'); if (n) n.classList.remove('active'); } });
+
+// ============================================================
+// FEATURE 4: DASHBOARD CHARTS
+// ============================================================
+var _chartInstances = {};
+async function loadDashboardCharts() {
+    if (typeof Chart === 'undefined') return;
+    try {
+        var [tasksR, clientsR, loginsR] = await Promise.all([
+            sb.from('tasks').select('status'),
+            sb.from('clients').select('health_score,brand_name,monthly_revenue'),
+            sb.from('login_history').select('created_at,status').gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()).order('created_at', { ascending: true })
+        ]);
+        var tasks = tasksR.data || []; var clients = clientsR.data || []; var logins = loginsR.data || [];
+        // Task Status Chart
+        var tc = { todo: 0, 'in-progress': 0, done: 0 }; tasks.forEach(function(t) { tc[t.status] = (tc[t.status] || 0) + 1; });
+        renderChart('chartTaskStatus', 'doughnut', { labels: ['To Do', 'In Progress', 'Done'], datasets: [{ data: [tc.todo, tc['in-progress'], tc.done], backgroundColor: ['#667eea', '#ed8936', '#48bb78'], borderWidth: 0 }] });
+        // Client Health Chart
+        var hb = { critical: 0, low: 0, medium: 0, healthy: 0 }; clients.forEach(function(c) { var h = c.health_score || 0; if (h < 40) hb.critical++; else if (h < 60) hb.low++; else if (h < 80) hb.medium++; else hb.healthy++; });
+        renderChart('chartClientHealth', 'doughnut', { labels: ['Critical (<40)', 'At Risk (40-59)', 'Fair (60-79)', 'Healthy (80+)'], datasets: [{ data: [hb.critical, hb.low, hb.medium, hb.healthy], backgroundColor: ['#fc8181', '#ed8936', '#ecc94b', '#48bb78'], borderWidth: 0 }] });
+        // Login Activity Chart (7 days)
+        var days = []; var dayCounts = []; for (var i = 6; i >= 0; i--) { var d = new Date(Date.now() - i * 86400000); var ds = d.toLocaleDateString('en', { weekday: 'short' }); days.push(ds); var dc = logins.filter(function(l) { return new Date(l.created_at).toDateString() === d.toDateString() && (l.status === 'Logged In' || l.status === 'success'); }).length; dayCounts.push(dc); }
+        renderChart('chartLoginActivity', 'bar', { labels: days, datasets: [{ label: 'Logins', data: dayCounts, backgroundColor: '#667eea', borderRadius: 6, barThickness: 24 }] });
+        // Revenue by Client Chart
+        var topClients = clients.sort(function(a, b) { return (b.monthly_revenue || 0) - (a.monthly_revenue || 0); }).slice(0, 5);
+        renderChart('chartRevenue', 'bar', { labels: topClients.map(function(c) { return c.brand_name || 'Unknown'; }), datasets: [{ label: 'Monthly Revenue ($)', data: topClients.map(function(c) { return c.monthly_revenue || 0; }), backgroundColor: ['#667eea', '#764ba2', '#48bb78', '#ed8936', '#38b2ac'], borderRadius: 6, barThickness: 24 }] });
+    } catch(e) { console.warn('Chart error:', e); }
+}
+function renderChart(canvasId, type, data) {
+    var ctx = document.getElementById(canvasId); if (!ctx) return;
+    if (_chartInstances[canvasId]) _chartInstances[canvasId].destroy();
+    _chartInstances[canvasId] = new Chart(ctx, { type: type, data: data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: type === 'doughnut' ? 'bottom' : 'top', labels: { color: '#a0aec0', font: { size: 11 }, padding: 12 } } }, scales: type === 'bar' ? { x: { ticks: { color: '#718096', font: { size: 11 } }, grid: { display: false } }, y: { ticks: { color: '#718096', font: { size: 11 } }, grid: { color: 'rgba(45,45,78,0.3)' }, beginAtZero: true } } : {} } });
+}
+
+// ============================================================
+// FEATURE 5: CALENDAR VIEW
+// ============================================================
+var _calYear = new Date().getFullYear();
+var _calMonth = new Date().getMonth();
+function calNavMonth(dir) { _calMonth += dir; if (_calMonth > 11) { _calMonth = 0; _calYear++; } if (_calMonth < 0) { _calMonth = 11; _calYear--; } renderCalendar(); }
+async function renderCalendar() {
+    var title = document.getElementById('calMonthTitle');
+    var grid = document.getElementById('calendarGrid');
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    title.textContent = months[_calMonth] + ' ' + _calYear;
+    var firstDay = new Date(_calYear, _calMonth, 1).getDay();
+    var daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+    var daysInPrev = new Date(_calYear, _calMonth, 0).getDate();
+    var today = new Date(); var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    // Load events
+    var events = [];
+    var startDate = new Date(_calYear, _calMonth, 1).toISOString();
+    var endDate = new Date(_calYear, _calMonth + 1, 0, 23, 59, 59).toISOString();
+    try {
+        var [tasksR, meetingsR, sopsR] = await Promise.all([
+            sb.from('tasks').select('title,deadline,status').not('deadline', 'is', null),
+            sb.from('meetings').select('title,created_at'),
+            sb.from('sop_logs').select('sop_name,created_at').gte('created_at', startDate).lte('created_at', endDate)
+        ]);
+        (tasksR.data || []).forEach(function(t) { if (t.deadline) events.push({ date: t.deadline.substring(0, 10), title: t.title, type: 'task' }); });
+        (meetingsR.data || []).forEach(function(m) { events.push({ date: m.created_at.substring(0, 10), title: m.title, type: 'meeting' }); });
+        (sopsR.data || []).forEach(function(s) { events.push({ date: s.created_at.substring(0, 10), title: s.sop_name, type: 'sop' }); });
+    } catch(e) { console.warn('Calendar error:', e); }
+    var cells = '';
+    // Previous month days
+    for (var p = firstDay - 1; p >= 0; p--) { cells += '<div class="cal-day other-month"><div class="cal-day-num">' + (daysInPrev - p) + '</div></div>'; }
+    // Current month days
+    for (var d = 1; d <= daysInMonth; d++) {
+        var dateStr = _calYear + '-' + String(_calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        var isToday = dateStr === todayStr;
+        var dayEvents = events.filter(function(e) { return e.date === dateStr; });
+        var evHtml = dayEvents.slice(0, 3).map(function(ev) { return '<div class="cal-event ' + ev.type + '">' + escapeHtml(ev.title) + '</div>'; }).join('');
+        if (dayEvents.length > 3) evHtml += '<div style="font-size:9px;color:#718096;">+' + (dayEvents.length - 3) + ' more</div>';
+        cells += '<div class="cal-day' + (isToday ? ' today' : '') + '"><div class="cal-day-num">' + d + '</div>' + evHtml + '</div>';
+    }
+    // Next month days
+    var totalCells = firstDay + daysInMonth; var remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (var n = 1; n <= remaining; n++) { cells += '<div class="cal-day other-month"><div class="cal-day-num">' + n + '</div></div>'; }
+    grid.innerHTML = cells;
 }
 </script>
 
@@ -2094,6 +2339,8 @@ async function loadAllData() {
     // LEAN LOAD: Only fetch dashboard stats on login
     // Page-specific data loads on demand via showPage()
     await updateStats();
+    loadDashboardCharts();
+    loadNotifications();
 }
 
 // ============================================================
