@@ -101,6 +101,9 @@
             .api-hub-grid { grid-template-columns: 1fr !important; }
             .tool-library-grid { grid-template-columns: 1fr !important; }
             .dashboard-charts-grid { grid-template-columns: 1fr !important; }
+            .portal-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .portal-detail-grid { grid-template-columns: 1fr !important; }
+            .email-quick-grid { grid-template-columns: 1fr !important; }
             .user-info { display: none !important; }
             .menu-button { display: none !important; }
             .user-menu { cursor: pointer; }
@@ -335,6 +338,7 @@
         <div class="nav-item" data-page="automations" onclick="showPage('automations')">Automations</div>
         <div class="nav-item" data-page="tools" onclick="showPage('tools')">Tool Builder</div>
         <div class="nav-item" data-page="storage" onclick="showPage('storage')">Cloud Storage</div>
+        <div class="nav-item" data-page="email-hub" onclick="showPage('email-hub')">Email Hub</div>
         <div class="nav-item" data-page="productivity" onclick="showPage('productivity')">Productivity OS</div>
         <div class="nav-item" data-page="data-input" onclick="showPage('data-input')">Data Input Portal</div>
         <div class="nav-item" data-page="announcements" onclick="showPage('announcements')">Announcements</div>
@@ -355,6 +359,7 @@
         <div class="nav-item" data-page="ai-assistants" onclick="showPage('ai-assistants')">AI Assistants</div>
         <div class="nav-section" id="navSectionScale">SCALE</div>
         <div class="nav-item" data-page="client-os" onclick="showPage('client-os')">Client OS</div>
+        <div class="nav-item" data-page="client-portal" onclick="showPage('client-portal')">Client Portal</div>
         <div class="nav-item" data-page="content-auto" onclick="showPage('content-auto')">Content Automation</div>
     </nav>
 </div>
@@ -452,6 +457,52 @@
 </div><!-- end content -->
 </div><!-- end main -->
 </div><!-- end app-container -->
+<!-- CLIENT PORTAL PAGE -->
+<div class="page" id="page-client-portal" style="display:none;">
+<div class="card"><div class="card-title">Client Portal</div><p style="color:#718096;font-size:13px;margin-bottom:16px;">Generate a client-facing view with performance data, reports, and communication.</p>
+<div class="form-group"><label class="form-label">Select Client</label><select class="form-control" id="portalClientSelect" onchange="loadPortalClient()"><option value="">Choose a client...</option></select></div>
+<div id="portalClientView" style="display:none;">
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" class="portal-stats-grid">
+<div class="stat-card"><div class="stat-value" id="portalHealth">—</div><div class="stat-label">Health Score</div></div>
+<div class="stat-card"><div class="stat-value" id="portalRevenue">—</div><div class="stat-label">Monthly Revenue</div></div>
+<div class="stat-card"><div class="stat-value" id="portalChurn">—</div><div class="stat-label">Churn Risk</div></div>
+<div class="stat-card"><div class="stat-value" id="portalNPS">—</div><div class="stat-label">NPS Score</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;" class="portal-detail-grid">
+<div class="card" style="padding:16px;"><div style="font-weight:600;margin-bottom:12px;">Client Details</div><div id="portalDetails" style="font-size:13px;color:#a0aec0;line-height:1.8;"></div></div>
+<div class="card" style="padding:16px;"><div style="font-weight:600;margin-bottom:12px;">Active Services</div><div id="portalServices"></div></div>
+</div>
+<div class="card" style="padding:16px;margin-bottom:20px;"><div style="font-weight:600;margin-bottom:12px;">Recent Reports</div><div id="portalReports"><p style="color:#718096;font-size:13px;">No reports yet.</p></div></div>
+<div class="card" style="padding:16px;margin-bottom:20px;"><div style="font-weight:600;margin-bottom:12px;">Send Message to Client</div>
+<div class="form-group"><label class="form-label">Subject</label><input type="text" class="form-control" id="portalEmailSubject" placeholder="Monthly Performance Report"></div>
+<div class="form-group"><label class="form-label">Message</label><textarea class="form-control" id="portalEmailBody" rows="5" placeholder="Hi {{client_name}}, here's your monthly update..." style="resize:vertical;"></textarea></div>
+<div style="display:flex;gap:10px;"><button class="btn btn-primary" onclick="sendPortalEmail()">Send via Email</button><button class="btn btn-secondary" onclick="generatePortalEmail()">AI Draft</button></div>
+</div>
+</div>
+</div></div>
+<!-- EMAIL HUB PAGE -->
+<div class="page" id="page-email-hub" style="display:none;">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div class="card-title" style="margin:0;">Email Hub</div><button class="btn btn-primary" onclick="openComposeEmail()">+ Compose Email</button></div>
+<div id="composeEmailCard" class="card" style="display:none;padding:16px;margin-bottom:20px;background:#0f0f1a;border:1px solid #2d2d4e;">
+<div style="font-weight:600;margin-bottom:14px;">Compose Email</div>
+<div class="form-group"><label class="form-label">To</label><input type="email" class="form-control" id="emailTo" placeholder="recipient@example.com"></div>
+<div class="form-group"><label class="form-label">Subject</label><input type="text" class="form-control" id="emailSubject" placeholder="Subject line"></div>
+<div class="form-group"><label class="form-label">Load from Template</label><select class="form-control" id="emailTemplateSelect" onchange="loadEmailTemplate()"><option value="">No template</option></select></div>
+<div class="form-group"><label class="form-label">Body</label><textarea class="form-control" id="emailBody" rows="8" placeholder="Write your email..." style="resize:vertical;"></textarea></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+<button class="btn btn-primary" onclick="sendEmail()">Send Email</button>
+<button class="btn btn-secondary" onclick="aiDraftEmail()">AI Draft</button>
+<button class="btn btn-secondary" onclick="document.getElementById('composeEmailCard').style.display='none'">Cancel</button>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;" class="email-quick-grid">
+<div style="background:#0f0f1a;padding:16px;border-radius:12px;border:1px solid #2d2d4e;cursor:pointer;text-align:center;" onclick="quickEmail('client-report')"><div style="font-size:24px;margin-bottom:8px;">📊</div><div style="font-size:13px;font-weight:600;">Client Report</div><div style="font-size:11px;color:#718096;">Monthly performance email</div></div>
+<div style="background:#0f0f1a;padding:16px;border-radius:12px;border:1px solid #2d2d4e;cursor:pointer;text-align:center;" onclick="quickEmail('welcome')"><div style="font-size:24px;margin-bottom:8px;">👋</div><div style="font-size:13px;font-weight:600;">Welcome Email</div><div style="font-size:11px;color:#718096;">New client onboarding</div></div>
+<div style="background:#0f0f1a;padding:16px;border-radius:12px;border:1px solid #2d2d4e;cursor:pointer;text-align:center;" onclick="quickEmail('follow-up')"><div style="font-size:24px;margin-bottom:8px;">🔄</div><div style="font-size:13px;font-weight:600;">Follow Up</div><div style="font-size:11px;color:#718096;">After meeting or call</div></div>
+</div>
+<div class="card-title">Email History</div>
+<div id="emailHistoryList"><p style="color:#718096;text-align:center;padding:20px;">No emails sent yet.</p></div>
+</div></div>
 <!-- ADD DOCUMENT MODAL -->
 <div class="modal-overlay" id="addDocModal"><div class="modal"><div class="modal-header"><div class="modal-title">Add Document</div><button class="modal-close" onclick="closeModal('addDocModal')">&times;</button></div><div class="modal-body"><form onsubmit="return saveDocument(event)"><div class="form-group"><label class="form-label">Title</label><input type="text" class="form-control" id="docTitle" required></div><div class="form-group"><label class="form-label">Category</label><select class="form-control" id="docCategory" required><option value="context-os">Context OS</option><option value="sop">SOP</option><option value="report">Report</option><option value="reference">Reference</option><option value="other">Other</option></select></div><div class="form-group"><label class="form-label">Content</label><textarea class="form-control" id="docContent" rows="5" placeholder="Document content..." style="resize: vertical;"></textarea></div><button type="submit" class="btn btn-primary" style="width: 100%;">Save to Cloud</button></form></div></div></div>
 <!-- ADD TEMPLATE MODAL -->
@@ -484,7 +535,7 @@ const RBAC = {
     isSuperuserOrAdmin(p) { return this.isSuperuser(p) || this.isAdmin(p); },
     isManagerOrAbove(p) { return this.isManager(p) || this.isSuperuserOrAdmin(p); },
     permissions: {
-        'page:home': { minPrimary: 'user', minSub: 'regular' }, 'page:activity-feed': { minPrimary: 'user', minSub: 'regular' }, 'page:calendar': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistant': { minPrimary: 'user', minSub: 'regular' }, 'page:documents': { minPrimary: 'user', minSub: 'regular' }, 'page:templates': { minPrimary: 'user', minSub: 'regular' }, 'page:automations': { minPrimary: 'user', minSub: 'regular' }, 'page:tools': { minPrimary: 'user', minSub: 'regular' }, 'page:storage': { minPrimary: 'user', minSub: 'regular' }, 'page:team': { minPrimary: 'user', minSub: 'regular' }, 'page:user-management': { minPrimary: 'admin', minSub: 'regular' }, 'page:login-history': { minPrimary: 'admin', minSub: 'regular' }, 'page:api-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:comms-os': { minPrimary: 'user', minSub: 'regular' }, 'page:meeting-intel': { minPrimary: 'user', minSub: 'regular' }, 'page:daily-brief': { minPrimary: 'user', minSub: 'manager' }, 'page:sop-engine': { minPrimary: 'user', minSub: 'manager' }, 'page:performance-os': { minPrimary: 'user', minSub: 'regular' }, 'page:training-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistants': { minPrimary: 'user', minSub: 'regular' }, 'page:productivity': { minPrimary: 'user', minSub: 'regular' }, 'page:data-input': { minPrimary: 'user', minSub: 'regular' }, 'page:announcements': { minPrimary: 'user', minSub: 'regular' }, 'page:system-config': { minPrimary: 'superuser', minSub: 'regular' }, 'page:data-os': { minPrimary: 'admin', minSub: 'regular' }, 'page:client-os': { minPrimary: 'user', minSub: 'manager' }, 'page:content-auto': { minPrimary: 'user', minSub: 'manager' },
+        'page:home': { minPrimary: 'user', minSub: 'regular' }, 'page:activity-feed': { minPrimary: 'user', minSub: 'regular' }, 'page:calendar': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistant': { minPrimary: 'user', minSub: 'regular' }, 'page:email-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:client-portal': { minPrimary: 'user', minSub: 'manager' }, 'page:documents': { minPrimary: 'user', minSub: 'regular' }, 'page:templates': { minPrimary: 'user', minSub: 'regular' }, 'page:automations': { minPrimary: 'user', minSub: 'regular' }, 'page:tools': { minPrimary: 'user', minSub: 'regular' }, 'page:storage': { minPrimary: 'user', minSub: 'regular' }, 'page:team': { minPrimary: 'user', minSub: 'regular' }, 'page:user-management': { minPrimary: 'admin', minSub: 'regular' }, 'page:login-history': { minPrimary: 'admin', minSub: 'regular' }, 'page:api-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:comms-os': { minPrimary: 'user', minSub: 'regular' }, 'page:meeting-intel': { minPrimary: 'user', minSub: 'regular' }, 'page:daily-brief': { minPrimary: 'user', minSub: 'manager' }, 'page:sop-engine': { minPrimary: 'user', minSub: 'manager' }, 'page:performance-os': { minPrimary: 'user', minSub: 'regular' }, 'page:training-hub': { minPrimary: 'user', minSub: 'regular' }, 'page:ai-assistants': { minPrimary: 'user', minSub: 'regular' }, 'page:productivity': { minPrimary: 'user', minSub: 'regular' }, 'page:data-input': { minPrimary: 'user', minSub: 'regular' }, 'page:announcements': { minPrimary: 'user', minSub: 'regular' }, 'page:system-config': { minPrimary: 'superuser', minSub: 'regular' }, 'page:data-os': { minPrimary: 'admin', minSub: 'regular' }, 'page:client-os': { minPrimary: 'user', minSub: 'manager' }, 'page:content-auto': { minPrimary: 'user', minSub: 'manager' },
         'action:create-document': { minPrimary: 'user', minSub: 'regular' }, 'action:delete-document': { minPrimary: 'user', minSub: 'regular' }, 'action:create-template': { minPrimary: 'user', minSub: 'regular' }, 'action:delete-template': { minPrimary: 'user', minSub: 'regular' }, 'action:create-automation': { minPrimary: 'user', minSub: 'manager' }, 'action:upload-file': { minPrimary: 'user', minSub: 'regular' }, 'action:delete-file': { minPrimary: 'user', minSub: 'regular' }, 'action:create-user': { minPrimary: 'admin', minSub: 'regular' }, 'action:change-role': { minPrimary: 'admin', minSub: 'regular' }, 'action:view-login-history': { minPrimary: 'admin', minSub: 'regular' }, 'action:export-data': { minPrimary: 'user', minSub: 'regular' }, 'action:view-team': { minPrimary: 'user', minSub: 'regular' }, 'action:manage-team': { minPrimary: 'user', minSub: 'manager' },
     },
     primaryRank: { 'user': 1, 'admin': 2, 'superuser': 3 }, subRank: { 'regular': 1, 'manager': 2 },
@@ -558,7 +609,7 @@ function showApp() {
     document.getElementById('navLoginHistory').style.display = RBAC.can(currentProfile, 'page:login-history') ? 'flex' : 'none';
     document.getElementById('navDailyBrief').style.display = RBAC.can(currentProfile, 'page:daily-brief') ? 'flex' : 'none';
     document.getElementById('navSopEngine').style.display = RBAC.can(currentProfile, 'page:sop-engine') ? 'flex' : 'none';
-    const ss = document.getElementById('navSectionScale'); if (ss) ss.style.display = (RBAC.can(currentProfile, 'page:client-os') || RBAC.can(currentProfile, 'page:content-auto')) ? 'block' : 'none';
+    const ss = document.getElementById('navSectionScale'); if (ss) ss.style.display = (RBAC.can(currentProfile, 'page:client-os') || RBAC.can(currentProfile, 'page:content-auto') || RBAC.can(currentProfile, 'page:client-portal')) ? 'block' : 'none';
     const tn = document.getElementById('navTeam'); if (tn) tn.style.display = RBAC.can(currentProfile, 'action:view-team') ? 'flex' : 'none';
     loadAllData();
     var hashPage = window.location.hash.replace('#', '');
@@ -671,10 +722,10 @@ function showPage(pageId) {
     _currentPageId = pageId;
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const page = document.getElementById('page-' + pageId); if (page) page.classList.add('active');
-    const titles = { 'home': 'Dashboard', 'activity-feed': 'Activity Feed', 'calendar': 'Calendar', 'ai-assistant': 'AI Assistant', 'documents': 'Documents', 'templates': 'Templates', 'automations': 'Automations', 'tools': 'Tool Builder', 'storage': 'Cloud Storage', 'team': 'Team & Permissions', 'user-management': 'Add New User', 'login-history': 'Login History', 'api-hub': 'API Hub', 'data-os': 'Data OS', 'comms-os': 'Communication OS', 'meeting-intel': 'Meeting Intelligence', 'daily-brief': 'Daily Brief', 'sop-engine': 'SOP Automation', 'performance-os': 'Performance OS', 'training-hub': 'Training Hub', 'ai-assistants': 'AI Assistants', 'productivity': 'Productivity OS', 'data-input': 'Data Input Portal', 'announcements': 'Announcements', 'client-os': 'Client OS', 'content-auto': 'Content Automation' };
+    const titles = { 'home': 'Dashboard', 'activity-feed': 'Activity Feed', 'calendar': 'Calendar', 'ai-assistant': 'AI Assistant', 'documents': 'Documents', 'templates': 'Templates', 'automations': 'Automations', 'tools': 'Tool Builder', 'storage': 'Cloud Storage', 'email-hub': 'Email Hub', 'team': 'Team & Permissions', 'user-management': 'Add New User', 'login-history': 'Login History', 'api-hub': 'API Hub', 'data-os': 'Data OS', 'comms-os': 'Communication OS', 'meeting-intel': 'Meeting Intelligence', 'daily-brief': 'Daily Brief', 'sop-engine': 'SOP Automation', 'performance-os': 'Performance OS', 'training-hub': 'Training Hub', 'ai-assistants': 'AI Assistants', 'productivity': 'Productivity OS', 'data-input': 'Data Input Portal', 'announcements': 'Announcements', 'client-os': 'Client OS', 'client-portal': 'Client Portal', 'content-auto': 'Content Automation' };
     document.getElementById('pageTitle').textContent = titles[pageId] || pageId;
     document.querySelectorAll('.nav-item').forEach(item => { if (item.getAttribute('onclick') === "showPage('" + pageId + "')") item.classList.add('active'); });
-    if (pageId === 'team') loadTeam(); if (pageId === 'login-history') loadLoginHistory(); if (pageId === 'storage') loadStorageFiles(); if (pageId === 'documents') loadDocuments(); if (pageId === 'templates') loadTemplates(); if (pageId === 'automations') loadAutomations(); if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); } if (pageId === 'api-hub') loadApiConfigs(); if (pageId === 'data-os') loadDataOs(); if (pageId === 'sop-engine') renderSopWorkflows(); if (pageId === 'meeting-intel') renderMeetingArchive(); if (pageId === 'comms-os') updateCommsStatus(); if (pageId === 'daily-brief') renderBriefHistory(); if (pageId === 'performance-os') renderPerfRoleCards(); if (pageId === 'training-hub') { renderTrainingPaths(); loadManagerTrainingView(); } if (pageId === 'ai-assistants') renderAiAssistants(); if (pageId === 'productivity') renderTasks(); if (pageId === 'data-input') updateInputHint(); if (pageId === 'home') loadDashboardCharts(); if (pageId === 'activity-feed') loadActivityFeed(); if (pageId === 'calendar') renderCalendar(); if (pageId === 'announcements') { renderAnnouncements(); if (RBAC.isSuperuserOrAdmin(currentProfile)) document.getElementById('postAnnouncementBtn').style.display = 'block'; }
+    if (pageId === 'team') loadTeam(); if (pageId === 'login-history') loadLoginHistory(); if (pageId === 'storage') loadStorageFiles(); if (pageId === 'documents') loadDocuments(); if (pageId === 'templates') loadTemplates(); if (pageId === 'automations') loadAutomations(); if (pageId === 'tools') { loadToolRequests(); renderToolLibrary(); } if (pageId === 'api-hub') loadApiConfigs(); if (pageId === 'data-os') loadDataOs(); if (pageId === 'sop-engine') renderSopWorkflows(); if (pageId === 'meeting-intel') renderMeetingArchive(); if (pageId === 'comms-os') updateCommsStatus(); if (pageId === 'daily-brief') renderBriefHistory(); if (pageId === 'performance-os') renderPerfRoleCards(); if (pageId === 'training-hub') { renderTrainingPaths(); loadManagerTrainingView(); } if (pageId === 'ai-assistants') renderAiAssistants(); if (pageId === 'productivity') renderTasks(); if (pageId === 'data-input') updateInputHint(); if (pageId === 'home') loadDashboardCharts(); if (pageId === 'activity-feed') loadActivityFeed(); if (pageId === 'calendar') renderCalendar(); if (pageId === 'email-hub') loadEmailHub(); if (pageId === 'client-portal') loadClientPortal(); if (pageId === 'announcements') { renderAnnouncements(); if (RBAC.isSuperuserOrAdmin(currentProfile)) document.getElementById('postAnnouncementBtn').style.display = 'block'; }
     var ct = document.querySelector('.content'); if (ct) ct.scrollTop = 0; window.scrollTo(0, 0);
 }
 function togglePassword() { const i = document.getElementById('passwordInput'); i.type = i.type === 'password' ? 'text' : 'password'; }
@@ -1412,6 +1463,149 @@ async function renderCalendar() {
     var totalCells = firstDay + daysInMonth; var remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (var n = 1; n <= remaining; n++) { cells += '<div class="cal-day other-month"><div class="cal-day-num">' + n + '</div></div>'; }
     grid.innerHTML = cells;
+}
+
+// ============================================================
+// FEATURE: CLIENT PORTAL
+// ============================================================
+async function loadClientPortal() {
+    var sel = document.getElementById('portalClientSelect');
+    if (sel.options.length <= 1) {
+        try {
+            var { data } = await sb.from('clients').select('id,brand_name').order('brand_name');
+            (data || []).forEach(function(c) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.brand_name; sel.appendChild(o); });
+        } catch(e) {}
+    }
+}
+async function loadPortalClient() {
+    var cid = document.getElementById('portalClientSelect').value;
+    var view = document.getElementById('portalClientView');
+    if (!cid) { view.style.display = 'none'; return; }
+    view.style.display = 'block';
+    try {
+        var { data: client } = await sb.from('clients').select('*').eq('id', cid).single();
+        if (!client) return;
+        document.getElementById('portalHealth').textContent = client.health_score || 0;
+        document.getElementById('portalHealth').style.color = (client.health_score || 0) >= 70 ? '#48bb78' : (client.health_score || 0) >= 40 ? '#ed8936' : '#fc8181';
+        document.getElementById('portalRevenue').textContent = '$' + (client.monthly_revenue || 0).toLocaleString();
+        document.getElementById('portalChurn').textContent = (client.churn_risk || 'low').toUpperCase();
+        document.getElementById('portalChurn').style.color = client.churn_risk === 'critical' ? '#fc8181' : client.churn_risk === 'high' ? '#ed8936' : '#48bb78';
+        document.getElementById('portalNPS').textContent = client.nps_score || '—';
+        document.getElementById('portalDetails').innerHTML = '<div><strong>Contact:</strong> ' + escapeHtml(client.contact_name || '') + '</div><div><strong>Email:</strong> ' + escapeHtml(client.contact_email || '') + '</div><div><strong>Service:</strong> ' + escapeHtml(client.service_type || '') + '</div><div><strong>Manager:</strong> ' + escapeHtml(client.account_manager || '') + '</div><div><strong>Status:</strong> ' + escapeHtml(client.status || '') + '</div><div><strong>Payment:</strong> ' + escapeHtml(client.payment_status || '') + '</div>';
+        var services = client.services || [];
+        if (typeof services === 'string') try { services = JSON.parse(services); } catch(e) { services = []; }
+        document.getElementById('portalServices').innerHTML = services.length > 0 ? services.map(function(s) { return '<span class="badge badge-blue" style="margin:3px;">' + escapeHtml(s) + '</span>'; }).join('') : '<span style="color:#718096;font-size:13px;">No services listed</span>';
+        var { data: reports } = await sb.from('client_reports').select('*').eq('client_id', cid).order('created_at', { ascending: false }).limit(5);
+        var rList = document.getElementById('portalReports');
+        if (reports && reports.length > 0) {
+            rList.innerHTML = reports.map(function(r) { return '<div class="file-item"><div class="file-info"><div><div class="file-name">' + escapeHtml(r.title) + '</div><div class="file-meta">' + escapeHtml(r.report_type) + ' · ' + timeAgo(r.created_at) + '</div></div></div></div>'; }).join('');
+        } else { rList.innerHTML = '<p style="color:#718096;font-size:13px;">No reports yet. Generate one from Client OS.</p>'; }
+        document.getElementById('portalEmailSubject').value = 'Monthly Report — ' + client.brand_name;
+        document.getElementById('portalEmailBody').value = 'Hi ' + (client.contact_name || '') + ',\n\nHere is your monthly performance update for ' + client.brand_name + '.\n\nHealth Score: ' + (client.health_score || 0) + '\nMonthly Revenue: $' + (client.monthly_revenue || 0).toLocaleString() + '\n\nBest regards,\n' + (currentProfile?.name || 'Horison Marketing');
+    } catch(e) { console.warn('Portal error:', e); }
+}
+function sendPortalEmail() {
+    var to = '';
+    var cid = document.getElementById('portalClientSelect').value;
+    var sub = document.getElementById('portalEmailSubject').value;
+    var body = document.getElementById('portalEmailBody').value;
+    if (cid) {
+        var sel = document.getElementById('portalClientSelect');
+        var clientName = sel.options[sel.selectedIndex].text;
+    }
+    try {
+        var selClient = allClients?.find(function(c) { return c.id === cid; });
+        if (selClient) to = selClient.contact_email || '';
+    } catch(e) {}
+    window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(body));
+    logEmailSent(to, sub);
+    showToast('Email client opened!', 'success');
+}
+async function generatePortalEmail() {
+    var cid = document.getElementById('portalClientSelect').value;
+    if (!cid) { showToast('Select a client first', 'error'); return; }
+    var apiKey = await getClaudeApiKey();
+    if (!apiKey) { showToast(friendlyApiError(), 'error'); return; }
+    showToast('Drafting email...', 'info');
+    try {
+        var health = document.getElementById('portalHealth').textContent;
+        var rev = document.getElementById('portalRevenue').textContent;
+        var sel = document.getElementById('portalClientSelect');
+        var clientName = sel.options[sel.selectedIndex].text;
+        var r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, system: 'Write a professional monthly performance email for an Amazon marketing agency client. Be concise and positive.', messages: [{ role: 'user', content: 'Draft email for ' + clientName + '. Health: ' + health + ', Revenue: ' + rev + '. From: ' + (currentProfile?.name || 'Account Manager') }] }) });
+        var d = await r.json(); if (d.error) throw new Error(d.error.message);
+        document.getElementById('portalEmailBody').value = d.content?.map(function(b) { return b.text || ''; }).join('') || '';
+        showToast('Draft ready!', 'success');
+    } catch(e) { showToast(friendlyApiError(e.message), 'error'); }
+}
+
+// ============================================================
+// FEATURE: EMAIL HUB
+// ============================================================
+var emailHistory = [];
+function openComposeEmail() { document.getElementById('composeEmailCard').style.display = 'block'; loadEmailTemplateOptions(); }
+function loadEmailTemplateOptions() {
+    var sel = document.getElementById('emailTemplateSelect');
+    sel.innerHTML = '<option value="">No template</option>';
+    (allTpls || []).forEach(function(t) { if (t.category === 'email') { var o = document.createElement('option'); o.value = t.id; o.textContent = t.name; sel.appendChild(o); } });
+}
+function loadEmailTemplate() {
+    var tid = document.getElementById('emailTemplateSelect').value;
+    if (!tid) return;
+    var tpl = (allTpls || []).find(function(t) { return t.id === tid; });
+    if (tpl) {
+        document.getElementById('emailSubject').value = tpl.name;
+        document.getElementById('emailBody').value = tpl.body || '';
+    }
+}
+function sendEmail() {
+    var to = document.getElementById('emailTo').value;
+    var sub = document.getElementById('emailSubject').value;
+    var body = document.getElementById('emailBody').value;
+    if (!to) { showToast('Enter a recipient email', 'error'); return; }
+    window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(body));
+    logEmailSent(to, sub);
+    document.getElementById('composeEmailCard').style.display = 'none';
+    showToast('Email client opened!', 'success');
+}
+async function aiDraftEmail() {
+    var to = document.getElementById('emailTo').value;
+    var sub = document.getElementById('emailSubject').value;
+    var apiKey = await getClaudeApiKey();
+    if (!apiKey) { showToast(friendlyApiError(), 'error'); return; }
+    showToast('Drafting...', 'info');
+    try {
+        var r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, system: 'Draft a professional email for an Amazon marketing agency. Be concise. Return only the email body text.', messages: [{ role: 'user', content: 'Write email to: ' + (to || 'client') + '. Subject: ' + (sub || 'Follow up') + '. From: ' + (currentProfile?.name || 'Horison Marketing') }] }) });
+        var d = await r.json(); if (d.error) throw new Error(d.error.message);
+        document.getElementById('emailBody').value = d.content?.map(function(b) { return b.text || ''; }).join('') || '';
+        showToast('Draft ready!', 'success');
+    } catch(e) { showToast(friendlyApiError(e.message), 'error'); }
+}
+function quickEmail(type) {
+    openComposeEmail();
+    if (type === 'client-report') { document.getElementById('emailSubject').value = 'Monthly Performance Report'; document.getElementById('emailBody').value = 'Hi {{client_name}},\n\nPlease find your monthly performance report below.\n\nKey highlights:\n- Total ad spend: \n- Revenue: \n- ACoS: \n- ROAS: \n\nPlease let us know if you have any questions.\n\nBest regards,\n' + (currentProfile?.name || 'Horison Marketing'); }
+    if (type === 'welcome') { document.getElementById('emailSubject').value = 'Welcome to Horison Marketing'; document.getElementById('emailBody').value = 'Hi {{client_name}},\n\nWelcome to Horison Marketing! We are excited to partner with you.\n\nYour account manager is ' + (currentProfile?.name || '[Name]') + '.\n\nNext steps:\n1. Kickoff call scheduled for [date]\n2. Please share Seller Central access\n3. Initial audit within 5 business days\n\nLooking forward to great results!\n\nBest,\nHorison Marketing'; }
+    if (type === 'follow-up') { document.getElementById('emailSubject').value = 'Following Up — Next Steps'; document.getElementById('emailBody').value = 'Hi {{client_name}},\n\nThank you for the call today. Here is a summary of what we discussed:\n\n- \n- \n\nNext steps:\n1. \n2. \n\nPlease let me know if you have any questions.\n\nBest,\n' + (currentProfile?.name || 'Horison Marketing'); }
+}
+async function logEmailSent(to, subject) {
+    emailHistory.unshift({ to: to, subject: subject, sent_by: currentProfile?.name || currentUser?.email, time: new Date().toISOString() });
+    renderEmailHistory();
+    try { await sb.from('data_inputs').insert({ input_type: 'email-sent', title: 'Email: ' + subject, content: 'To: ' + to + '\nSubject: ' + subject, submitted_by: currentUser?.email, routed_to: 'Email Log', user_id: currentUser?.id, created_at: new Date().toISOString() }); } catch(e) {}
+}
+async function loadEmailHub() {
+    loadEmailTemplateOptions();
+    try {
+        var { data } = await sb.from('data_inputs').select('*').eq('input_type', 'email-sent').order('created_at', { ascending: false }).limit(20);
+        emailHistory = (data || []).map(function(d) { return { to: (d.content || '').split('\n')[0].replace('To: ', ''), subject: d.title.replace('Email: ', ''), sent_by: d.submitted_by, time: d.created_at }; });
+    } catch(e) {}
+    renderEmailHistory();
+}
+function renderEmailHistory() {
+    var list = document.getElementById('emailHistoryList');
+    if (emailHistory.length === 0) { list.innerHTML = '<p style="color:#718096;text-align:center;padding:20px;">No emails sent yet.</p>'; return; }
+    list.innerHTML = emailHistory.map(function(e) {
+        return '<div class="file-item"><div class="file-info"><div><div class="file-name">' + escapeHtml(e.subject) + '</div><div class="file-meta">To: ' + escapeHtml(e.to) + ' · Sent by ' + escapeHtml(e.sent_by || '') + ' · ' + timeAgo(e.time) + '</div></div></div></div>';
+    }).join('');
 }
 </script>
 
